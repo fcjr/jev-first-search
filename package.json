@@ -1,0 +1,57 @@
+{
+  "name": "jev-first-search",
+  "version": "0.1.0",
+  "description": "Graph search that asks Jev which node to visit next. DFS has a stack. BFS has a queue. JFS has an API key.",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./mock": "./src/mock.js"
+  },
+  "bin": {
+    "jev-first-search": "./bin/jev-first-search.js",
+    "jfs": "./bin/jev-first-search.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "demo": "node ./bin/jev-first-search.js --mock examples/office.json desk coffee",
+    "prepublishOnly": "npm test"
+  },
+  "keywords": [
+    "graph",
+    "search",
+    "bfs",
+    "dfs",
+    "jfs",
+    "jev",
+    "typesafe-ai",
+    "system-one",
+    "probabilistic",
+    "pathfinding"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fcjr/jev-first-search.git"
+  },
+  "homepage": "https://github.com/fcjr/jev-first-search#readme",
+  "bugs": {
+    "url": "https://github.com/fcjr/jev-first-search/issues"
+  },
+  "dependencies": {
+    "@typesafe-ai/sdk": "^0.6.0"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}
