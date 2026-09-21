@@ -1,5 +1,6 @@
 // A stand-in for Jev, for people without a TYPESAFE_API_KEY.
 // It answers like Jev would if Jev were a queue: first frontier node, every time.
+// Asked for a distance, it makes one up.
 // Latency and confidence are made up in the documented 70-500 ms range.
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -20,6 +21,13 @@ export class MockJev {
     for (const [name, question] of Object.entries(questions)) {
       if (question.type === 'noul') {
         answers[name] = { type: 'noul', noul: this.reachable };
+        continue;
+      }
+      if (question.type === 'score') {
+        const n = question.criteria.length;
+        const value = Math.random() * (n - 1);
+        const probabilities = Object.fromEntries(question.criteria.map((_, i) => [i, 1 / n]));
+        answers[name] = { type: 'score', score: value, confidence: 0.3 + Math.random() * 0.3, legend: {}, probabilities };
         continue;
       }
       const labels = Object.keys(question.criteria);

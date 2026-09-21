@@ -1,0 +1,194 @@
+<title>Jev-First Search Terminal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #1b1d21;
+    --bar: #2a2d33;
+    --fg: #e8e2d0;
+    --dim: #8a8676;
+    --amber: #f2b544;
+    --red: #e06c5c;
+    --blue: #7cb5e0;
+    --page: #eee9dc;
+    --page-ink: #1b1d21;
+    color-scheme: light;
+  }
+  body { background: var(--page); color: var(--page-ink); font-family: "IBM Plex Sans", system-ui, sans-serif; margin: 0; padding-block: 32px; padding-inline: 16px; }
+  body.frame { padding: 0; background: var(--bg); overflow: hidden; }
+  .page { max-width: 1200px; margin: 0 auto; display: grid; gap: 18px; }
+  .frame .page { max-width: none; gap: 0; }
+  .lede { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .frame .lede, .frame .caption { display: none; }
+  h1 { font: 500 24px/1.2 "IBM Plex Sans", system-ui, sans-serif; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+  .caption { color: #5f5a4c; max-width: 70ch; line-height: 1.5; margin: 0; }
+  .caption code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .92em; background: #fff; border: 1px solid #d5cfbf; padding: 1px 6px; border-radius: 4px; }
+  button { font: 500 14px "IBM Plex Sans", system-ui, sans-serif; color: var(--page-ink); background: #fff; border: 1.5px solid var(--page-ink); border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+  button:hover { background: var(--amber); }
+  button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+  .wrap { width: 100%; }
+  .term {
+    width: 1200px; height: 676px; transform-origin: top left; box-sizing: border-box;
+    background: var(--bg); color: var(--fg); border-radius: 12px; overflow: hidden;
+    display: grid; grid-template-rows: 40px 1fr;
+    box-shadow: 0 24px 60px rgba(0,0,0,.25);
+    font: 400 17px/26px "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .frame .term { border-radius: 0; box-shadow: none; }
+  .titlebar { background: var(--bar); display: flex; align-items: center; padding: 0 16px; gap: 8px; color: var(--dim); font-size: 13px; }
+  .titlebar .dots { display: flex; gap: 7px; margin-right: 12px; }
+  .titlebar .dots i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .titlebar .dots i:nth-child(1) { background: #e06c5c; } .titlebar .dots i:nth-child(2) { background: #f2b544; } .titlebar .dots i:nth-child(3) { background: #7bc47f; }
+  .titlebar .title { flex: 1; text-align: center; margin-right: 60px; }
+  .screen { padding: 14px 24px; overflow: hidden; white-space: pre; font-variant-numeric: tabular-nums; }
+  .l { height: 26px; }
+  .p { color: var(--amber); }
+  .d { color: var(--dim); }
+  .r { color: var(--red); }
+  .b { color: var(--blue); }
+  .y { color: var(--amber); }
+  .bold { font-weight: 600; color: #fff; }
+  .cur { display: inline-block; width: 10px; height: 20px; background: var(--fg); vertical-align: -3px; }
+  @media (prefers-reduced-motion: reduce) { .cur { display: none; } }
+</style>
+
+<div class="page">
+  <div class="lede">
+    <h1>jev-first-search, in the terminal</h1>
+    <button id="replay" type="button">Replay</button>
+  </div>
+  <div class="wrap" id="wrap">
+    <div class="term" id="term">
+      <div class="titlebar"><div class="dots"><i></i><i></i><i></i></div><div class="title">jev-first-search — zsh — 120×26</div></div>
+      <div class="screen" id="screen"></div>
+    </div>
+  </div>
+  <p class="caption" id="caption"></p>
+</div>
+
+<script id="traces" type="application/json">
+{"recordedAt":"2026-09-21T21:08:31.895Z","mock":true,"model":"jev-mock","race":{"graph":{"A":["B","C"],"B":["A","D","I"],"C":["A","E","J"],"D":["B","F","E"],"E":["C","D","G"],"F":["D","I","H"],"G":["E","J","H"],"H":["F","G"],"I":["B","F"],"J":["C","G"]},"start":"A","goal":"H","jfs":{"path":["A","B","D","F","H"],"reason":"found","visited":["A","B","C","D","I","E","J","F","G","H"],"steps":[{"type":"jev-first","noul":0.91,"ms":115.213875},{"type":"visit","frontier":["A"],"picked":"A","confidence":0.5922079925176886,"probabilities":{"A":0.5922079925176886,"give_up":0.40779200748231137},"ms":487.353458},{"type":"visit","frontier":["B","C"],"picked":"B","confidence":0.5579095202359401,"probabilities":{"B":0.5579095202359401,"C":0.22104523988202995,"give_up":0.22104523988202995},"ms":411.21387500000003},{"type":"visit","frontier":["C","D","I"],"picked":"C","confidence":0.5593532950245763,"probabilities":{"C":0.5593532950245763,"D":0.1468822349918079,"I":0.1468822349918079,"give_up":0.1468822349918079},"ms":119.23612500000013},{"type":"visit","frontier":["D","I","E","J"],"picked":"D","confidence":0.5859868266894341,"probabilities":{"D":0.5859868266894341,"I":0.10350329332764147,"E":0.10350329332764147,"J":0.10350329332764147,"give_up":0.10350329332764147},"ms":367.0383750000001},{"type":"visit","frontier":["I","E","J","F"],"picked":"I","confidence":0.6362936776572714,"probabilities":{"I":0.6362936776572714,"E":0.09092658058568215,"J":0.09092658058568215,"F":0.09092658058568215,"give_up":0.09092658058568215},"ms":346.25008300000013},{"type":"visit","frontier":["E","J","F"],"picked":"E","confidence":0.7185975849332993,"probabilities":{"E":0.7185975849332993,"J":0.09380080502223358,"F":0.09380080502223358,"give_up":0.09380080502223358},"ms":398.34408299999996},{"type":"visit","frontier":["J","F","G"],"picked":"J","confidence":0.5902475171451684,"probabilities":{"J":0.5902475171451684,"F":0.13658416095161052,"G":0.13658416095161052,"give_up":0.13658416095161052},"ms":141.42466699999977},{"type":"visit","frontier":["F","G"],"picked":"F","confidence":0.7918315656862934,"probabilities":{"F":0.7918315656862934,"G":0.10408421715685329,"give_up":0.10408421715685329},"ms":165.23912500000006},{"type":"visit","frontier":["G","H"],"picked":"G","confidence":0.7637624273203139,"probabilities":{"G":0.7637624273203139,"H":0.11811878633984307,"give_up":0.11811878633984307},"ms":166.23849999999993},{"type":"visit","frontier":["H"],"picked":"H","confidence":0.6148395874818099,"probabilities":{"H":0.6148395874818099,"give_up":0.3851604125181901},"ms":119.42312500000025}],"jevCalls":11,"inputTokens":652.25,"elapsedMs":2839.791167,"estimatedCostUsd":0.000027394500000000003},"jevStar":{"path":["A","B","D","F","H"],"reason":"found","visited":["A","B","D","C","E","J","F","I","G","H"],"steps":[{"type":"heuristic","node":"A","h":3.507234285192993,"confidence":0.30524930784972015,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":320.48754099999996},{"type":"heuristic","node":"B","h":1.040873702665376,"confidence":0.5505263874743858,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":455.2415000000001},{"type":"heuristic","node":"C","h":3.231688850929691,"confidence":0.5445925941538665,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":231.64249999999993},{"type":"expand","node":"A","g":0,"h":3.507234285192993,"open":[{"node":"B","g":1,"h":1.040873702665376,"f":2.040873702665376},{"node":"C","g":1,"h":3.231688850929691,"f":4.231688850929691}]},{"type":"heuristic","node":"D","h":1.2267846778351887,"confidence":0.4593239564602633,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":148.23937499999965},{"type":"heuristic","node":"I","h":3.2973672938026755,"confidence":0.5993594505911637,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":394.2162089999997},{"type":"expand","node":"B","g":1,"h":1.040873702665376,"open":[{"node":"C","g":1,"h":3.231688850929691,"f":4.231688850929691},{"node":"D","g":2,"h":1.2267846778351887,"f":3.2267846778351887},{"node":"I","g":2,"h":3.2973672938026755,"f":5.297367293802676}]},{"type":"heuristic","node":"F","h":2.245287909946606,"confidence":0.4139101454989851,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":350.324208},{"type":"heuristic","node":"E","h":1.9818013085734254,"confidence":0.5241890875546836,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":278.8143749999999},{"type":"expand","node":"D","g":2,"h":1.2267846778351887,"open":[{"node":"C","g":1,"h":3.231688850929691,"f":4.231688850929691},{"node":"I","g":2,"h":3.2973672938026755,"f":5.297367293802676},{"node":"F","g":3,"h":2.245287909946606,"f":5.245287909946606},{"node":"E","g":3,"h":1.9818013085734254,"f":4.981801308573425}]},{"type":"heuristic","node":"J","h":3.095233011223082,"confidence":0.5739255405002485,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":338.12887500000033},{"type":"expand","node":"C","g":1,"h":3.231688850929691,"open":[{"node":"E","g":2,"h":1.9818013085734254,"f":3.9818013085734254},{"node":"F","g":3,"h":2.245287909946606,"f":5.245287909946606},{"node":"I","g":2,"h":3.2973672938026755,"f":5.297367293802676},{"node":"J","g":2,"h":3.095233011223082,"f":5.0952330112230815}]},{"type":"heuristic","node":"G","h":3.0147482918968826,"confidence":0.3436388522314079,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":225.22629200000029},{"type":"expand","node":"E","g":2,"h":1.9818013085734254,"open":[{"node":"J","g":2,"h":3.095233011223082,"f":5.0952330112230815},{"node":"F","g":3,"h":2.245287909946606,"f":5.245287909946606},{"node":"I","g":2,"h":3.2973672938026755,"f":5.297367293802676},{"node":"G","g":3,"h":3.0147482918968826,"f":6.014748291896883}]},{"type":"expand","node":"J","g":2,"h":3.095233011223082,"open":[{"node":"F","g":3,"h":2.245287909946606,"f":5.245287909946606},{"node":"I","g":2,"h":3.2973672938026755,"f":5.297367293802676},{"node":"G","g":3,"h":3.0147482918968826,"f":6.014748291896883}]},{"type":"heuristic","node":"H","h":2.2362545539708987,"confidence":0.4775306653813267,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":136.2010419999997},{"type":"expand","node":"F","g":3,"h":2.245287909946606,"open":[{"node":"I","g":2,"h":3.2973672938026755,"f":5.297367293802676},{"node":"G","g":3,"h":3.0147482918968826,"f":6.014748291896883},{"node":"H","g":4,"h":2.2362545539708987,"f":6.236254553970898}]},{"type":"expand","node":"I","g":2,"h":3.2973672938026755,"open":[{"node":"G","g":3,"h":3.0147482918968826,"f":6.014748291896883},{"node":"H","g":4,"h":2.2362545539708987,"f":6.236254553970898}]},{"type":"expand","node":"G","g":3,"h":3.0147482918968826,"open":[{"node":"H","g":4,"h":2.2362545539708987,"f":6.236254553970898}]},{"type":"expand","node":"H","g":4,"h":2.2362545539708987,"open":[]}],"heuristics":{"A":3.507234285192993,"B":1.040873702665376,"C":3.231688850929691,"D":1.2267846778351887,"I":3.2973672938026755,"F":2.245287909946606,"E":1.9818013085734254,"J":3.095233011223082,"G":3.0147482918968826,"H":2.2362545539708987},"jevCalls":10,"inputTokens":892.5,"elapsedMs":2880.0219590000006,"estimatedCostUsd":0.000037485000000000004}},"terminal":[{"args":["examples/office.json","desk","coffee"],"result":{"path":["desk","hallway","kitchen","coffee"],"reason":"found","visited":["desk","hallway","window","kitchen","meeting_room","stairs","coffee"],"steps":[{"type":"jev-first","noul":0.91,"ms":394.2955000000002},{"type":"visit","frontier":["desk"],"picked":"desk","confidence":0.8384884455159433,"probabilities":{"desk":0.8384884455159433,"give_up":0.16151155448405674},"ms":347.2799160000004},{"type":"visit","frontier":["hallway","window"],"picked":"hallway","confidence":0.7062388117694842,"probabilities":{"hallway":0.7062388117694842,"window":0.1468805941152579,"give_up":0.1468805941152579},"ms":175.21695799999998},{"type":"visit","frontier":["window","kitchen","meeting_room","stairs"],"picked":"window","confidence":0.5971355013526816,"probabilities":{"window":0.5971355013526816,"kitchen":0.10071612466182961,"meeting_room":0.10071612466182961,"stairs":0.10071612466182961,"give_up":0.10071612466182961},"ms":229.18141599999944},{"type":"visit","frontier":["kitchen","meeting_room","stairs"],"picked":"kitchen","confidence":0.5572616123871581,"probabilities":{"kitchen":0.5572616123871581,"meeting_room":0.14757946253761398,"stairs":0.14757946253761398,"give_up":0.14757946253761398},"ms":94.2582080000002},{"type":"visit","frontier":["meeting_room","stairs","coffee"],"picked":"meeting_room","confidence":0.8956625460175518,"probabilities":{"meeting_room":0.8956625460175518,"stairs":0.03477915132748274,"coffee":0.03477915132748274,"give_up":0.03477915132748274},"ms":449.2457089999998},{"type":"visit","frontier":["stairs","coffee"],"picked":"stairs","confidence":0.6096526146633661,"probabilities":{"stairs":0.6096526146633661,"coffee":0.19517369266831697,"give_up":0.19517369266831697},"ms":79.39795799999956},{"type":"visit","frontier":["coffee","roof"],"picked":"coffee","confidence":0.7683052745780153,"probabilities":{"coffee":0.7683052745780153,"roof":0.11584736271099233,"give_up":0.11584736271099233},"ms":299.9205000000002}],"jevCalls":8,"inputTokens":556.25,"elapsedMs":2070.00425,"estimatedCostUsd":0.000023362500000000002}},{"args":["examples/office.json","desk","parking_lot"],"result":{"path":null,"reason":"frontier exhausted","visited":["desk","hallway","window","kitchen","meeting_room","stairs","coffee","roof"],"steps":[{"type":"jev-first","noul":0.91,"ms":271.79970800000046},{"type":"visit","frontier":["desk"],"picked":"desk","confidence":0.8786624251009839,"probabilities":{"desk":0.8786624251009839,"give_up":0.12133757489901609},"ms":352.177458000001},{"type":"visit","frontier":["hallway","window"],"picked":"hallway","confidence":0.6671559148014623,"probabilities":{"hallway":0.6671559148014623,"window":0.16642204259926885,"give_up":0.16642204259926885},"ms":302.472667},{"type":"visit","frontier":["window","kitchen","meeting_room","stairs"],"picked":"window","confidence":0.7704601319427152,"probabilities":{"window":0.7704601319427152,"kitchen":0.05738496701432119,"meeting_room":0.05738496701432119,"stairs":0.05738496701432119,"give_up":0.05738496701432119},"ms":136.1790000000001},{"type":"visit","frontier":["kitchen","meeting_room","stairs"],"picked":"kitchen","confidence":0.6029348155005407,"probabilities":{"kitchen":0.6029348155005407,"meeting_room":0.13235506149981976,"stairs":0.13235506149981976,"give_up":0.13235506149981976},"ms":138.1621669999986},{"type":"visit","frontier":["meeting_room","stairs","coffee"],"picked":"meeting_room","confidence":0.9499672207885927,"probabilities":{"meeting_room":0.9499672207885927,"stairs":0.016677593070469083,"coffee":0.016677593070469083,"give_up":0.016677593070469083},"ms":427.2101670000011},{"type":"visit","frontier":["stairs","coffee"],"picked":"stairs","confidence":0.7422170974983415,"probabilities":{"stairs":0.7422170974983415,"coffee":0.12889145125082924,"give_up":0.12889145125082924},"ms":366.82600000000093},{"type":"visit","frontier":["coffee","roof"],"picked":"coffee","confidence":0.5717755478601333,"probabilities":{"coffee":0.5717755478601333,"roof":0.21411222606993335,"give_up":0.21411222606993335},"ms":491.13837499999863},{"type":"visit","frontier":["roof"],"picked":"roof","confidence":0.9491149353402969,"probabilities":{"roof":0.9491149353402969,"give_up":0.050885064659703105},"ms":213.21604200000002}],"jevCalls":9,"inputTokens":637,"elapsedMs":2700.0733330000003,"estimatedCostUsd":0.000026754000000000005}},{"args":["examples/office.json","desk","roof"],"result":{"path":["desk","hallway","stairs","roof"],"reason":"found","visited":["desk","hallway","window","kitchen","meeting_room","stairs","coffee","roof"],"steps":[{"type":"jev-first","noul":0.91,"ms":429.1720830000013},{"type":"visit","frontier":["desk"],"picked":"desk","confidence":0.6850029818420179,"probabilities":{"desk":0.6850029818420179,"give_up":0.3149970181579821},"ms":461.10520799999904},{"type":"visit","frontier":["hallway","window"],"picked":"hallway","confidence":0.7323961489067754,"probabilities":{"hallway":0.7323961489067754,"window":0.1338019255466123,"give_up":0.1338019255466123},"ms":190.16412499999933},{"type":"visit","frontier":["window","kitchen","meeting_room","stairs"],"picked":"window","confidence":0.7404274104916673,"probabilities":{"window":0.7404274104916673,"kitchen":0.06489314737708318,"meeting_room":0.06489314737708318,"stairs":0.06489314737708318,"give_up":0.06489314737708318},"ms":369.47162500000013},{"type":"visit","frontier":["kitchen","meeting_room","stairs"],"picked":"kitchen","confidence":0.7043253052613082,"probabilities":{"kitchen":0.7043253052613082,"meeting_room":0.09855823157956393,"stairs":0.09855823157956393,"give_up":0.09855823157956393},"ms":100.08974999999919},{"type":"visit","frontier":["meeting_room","stairs","coffee"],"picked":"meeting_room","confidence":0.6019732104701602,"probabilities":{"meeting_room":0.6019732104701602,"stairs":0.13267559650994662,"coffee":0.13267559650994662,"give_up":0.13267559650994662},"ms":197.7474999999995},{"type":"visit","frontier":["stairs","coffee"],"picked":"stairs","confidence":0.6145571476270977,"probabilities":{"stairs":0.6145571476270977,"coffee":0.19272142618645116,"give_up":0.19272142618645116},"ms":402.69674999999916},{"type":"visit","frontier":["coffee","roof"],"picked":"coffee","confidence":0.9366014891918377,"probabilities":{"coffee":0.9366014891918377,"roof":0.03169925540408114,"give_up":0.03169925540408114},"ms":80.28166699999929},{"type":"visit","frontier":["roof"],"picked":"roof","confidence":0.7062274429804463,"probabilities":{"roof":0.7062274429804463,"give_up":0.29377255701955374},"ms":246.1644580000011}],"jevCalls":9,"inputTokens":621.25,"elapsedMs":2477.8339159999996,"estimatedCostUsd":0.000026092500000000005}}]}
+</script>
+
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  const FRAME_T = params.has('t') ? Number(params.get('t')) : null;
+  if (params.has('frame')) document.body.classList.add('frame');
+
+  const T = JSON.parse(document.getElementById('traces').textContent || '{}');
+  const screen = document.getElementById('screen');
+  if (!T.terminal) {
+    screen.innerHTML = '<div class="l"><span class="p">$</span> <span class="d">no traces recorded yet. run: npm run media:record</span></div>';
+    return;
+  }
+  document.getElementById('caption').innerHTML =
+    `Three runs of the CLI on <code>examples/office.json</code>. Every step is one request to <code>${T.model ?? 'jev-latest'}</code>. ` +
+    (T.mock ? 'These answers are from the mock client, not the API.' : `The answers, confidences and latencies are real, recorded ${new Date(T.recordedAt).toLocaleDateString()}.`);
+
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const bar = (p) => { const n = Math.round(Math.max(0, Math.min(1, p)) * 10); return `<span class="b">${'█'.repeat(n)}</span><span class="d">${'░'.repeat(10 - n)}</span>`; };
+  const ms = (n) => `${Math.round(n)}ms`.padStart(6);
+  const pad = (s, n) => s + ' '.repeat(Math.max(0, n - s.length));
+
+  const firstLine = (s) =>
+    `  <span class="y">jev first</span>  reachable? ${bar(s.noul)} ${s.noul.toFixed(2)}  ${ms(s.ms)}  ${s.noul >= 0.5 ? '<span class="d">ok, searching</span>' : '<span class="r">no. not searching.</span>'}`;
+  const stepLine = (i, s) => {
+    const f = pad(`[${s.frontier.join(', ')}]`, 42);
+    const p = s.picked === 'give_up' ? `<span class="r">${pad(s.picked, 12)}</span>` : `<span class="bold">${pad(s.picked, 12)}</span>`;
+    return `  step ${String(i).padStart(2)}    ${esc(f)} → ${p} ${bar(s.confidence)} ${s.confidence.toFixed(2)}  ${ms(s.ms)}`;
+  };
+  const totals = (r) => `  ${r.jevCalls} jev call${r.jevCalls === 1 ? '' : 's'} · ${Math.round(r.elapsedMs)} ms · <span class="y">$${r.estimatedCostUsd.toFixed(7)}</span>`;
+  const remark = (r) => {
+    if (r.reason === 'found') return `# ${r.jevCalls} http requests to walk to the ${r.path[r.path.length - 1]}.`;
+    if (r.reason === 'jev said no') return '# 0 nodes visited. fastest way to not find something.';
+    if (r.reason === 'jev gave up') return '# it was offered give_up. it took it.';
+    if (r.reason === 'frontier exhausted') return '# jev visited everything. none of it was the goal.';
+    return `# ${r.reason}`;
+  };
+
+  // Script items: cmd (typed), line (instant), wait (spinner for ms, then a line), pause.
+  const CHAR_MS = 42, AFTER_CMD = 420, LINE_GAP = 70;
+  const S = [];
+  for (const run of T.terminal) {
+    const r = run.result;
+    S.push({ type:'cmd', text:`npx jev-first-search ${run.args.join(' ')}` });
+    S.push({ type:'line', html:`jev-first-search  ${esc(run.args[1])} → ${esc(run.args[2])}` });
+    let n = 0;
+    for (const s of r.steps) {
+      if (s.type === 'jev-first') S.push({ type:'wait', ms:s.ms, label:`is ${run.args[2]} reachable?`, then: firstLine(s) });
+      else S.push({ type:'wait', ms:s.ms, label:`which of [${s.frontier.join(', ')}] next?`, then: stepLine(++n, s) });
+    }
+    S.push({ type:'line', html:'' });
+    S.push({ type:'line', html: r.path ? `  path: <span class="y">${esc(r.path.join(' → '))}</span>` : `  <span class="r">no path (${esc(r.reason)})</span>` });
+    S.push({ type:'line', html: totals(r) });
+    S.push({ type:'pause', ms:1100 });
+    S.push({ type:'cmd', text: remark(r), comment:true });
+    S.push({ type:'pause', ms:1600 });
+  }
+  S[S.length - 1].ms = 3200;
+
+  let t = 0;
+  for (const it of S) {
+    it.start = t;
+    if (it.type === 'cmd') t += it.text.length * CHAR_MS + AFTER_CMD;
+    else if (it.type === 'line') t += LINE_GAP;
+    else if (it.type === 'wait') t += it.ms + LINE_GAP;
+    else t += it.ms;
+    it.end = t;
+  }
+  const LOOP = t;
+  const SPIN = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏'];
+  const MAX_LINES = 23;
+
+  function render(t) {
+    const lines = [];
+    let promptOpen = false;
+    for (const it of S) {
+      if (it.start > t) break;
+      const active = t < it.end;
+      if (it.type === 'cmd') {
+        if (lines.length) lines.push('');
+        const n = active ? Math.min(it.text.length, Math.floor((t - it.start) / CHAR_MS)) : it.text.length;
+        const typed = esc(it.text.slice(0, n));
+        lines.push(`<span class="p">$</span> ${it.comment ? `<span class="d">${typed}</span>` : typed}${active ? '<span class="cur"></span>' : ''}`);
+        promptOpen = false;
+      } else if (it.type === 'line') {
+        lines.push(it.html);
+      } else if (it.type === 'wait') {
+        if (t < it.start + it.ms) {
+          const el = t - it.start;
+          lines.push(`  <span class="d">${SPIN[Math.floor(el / 80) % SPIN.length]} asking jev · ${esc(it.label)} · ${Math.round(el)} ms</span>`);
+        } else {
+          lines.push(it.then);
+        }
+      } else if (it.type === 'pause' && active) {
+        promptOpen = true;
+      }
+    }
+    if (promptOpen) { lines.push(''); lines.push('<span class="p">$</span> <span class="cur"></span>'); }
+    screen.innerHTML = lines.slice(-MAX_LINES).map(l => `<div class="l">${l}</div>`).join('');
+  }
+  window.__render = render;
+  window.__LOOP__ = LOOP;
+
+  const wrap = document.getElementById('wrap'), term = document.getElementById('term');
+  function fit() {
+    if (document.body.classList.contains('frame')) { term.style.transform = ''; wrap.style.height = "676px"; return; }
+    const s = Math.min(1, wrap.clientWidth / 1200);
+    term.style.transform = `scale(${s})`;
+    wrap.style.height = `${676 * s}px`;
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (FRAME_T !== null) { render(FRAME_T); return; }
+  if (reduced) { render(LOOP - 1); return; }
+
+  let origin = performance.now();
+  function tick(now) { render((now - origin) % LOOP); requestAnimationFrame(tick); }
+  requestAnimationFrame(tick);
+  document.getElementById('replay').addEventListener('click', () => { origin = performance.now(); });
+})();
+</script>

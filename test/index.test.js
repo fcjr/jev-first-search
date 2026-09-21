@@ -108,3 +108,49 @@ describe('jevFirstSearch', () => {
     expect(result.reason).toBe('jev gave up');
   });
 });
+
+describe('jevStar', async () => {
+  const { jevStar } = await import('../src/star.js');
+
+  // A Jev that happens to know the true distance to F.
+  const truth = { A: 3, B: 2, C: 2, D: 1, E: 1, F: 0 };
+  const oracle = {
+    calls: 0,
+    async systemOne({ state }) {
+      this.calls += 1;
+      const value = truth[state.node];
+      return {
+        model: 'jev-oracle',
+        answers: { distance: { type: 'score', score: value, confidence: 0.9, legend: {}, probabilities: { [value]: 1 } } },
+        usage: { input_tokens: 120, output_tokens: 0 },
+      };
+    },
+  };
+
+  it('finds the shortest path with a perfect heuristic', async () => {
+    oracle.calls = 0;
+    const result = await jevStar(graph, 'A', 'F', { client: oracle });
+    expect(result.path).toHaveLength(4);
+    expect(result.path[0]).toBe('A');
+    expect(result.path.at(-1)).toBe('F');
+    expect(result.reason).toBe('found');
+    expect(result.jevCalls).toBe(oracle.calls);
+  });
+
+  it('asks jev once per discovered node', async () => {
+    oracle.calls = 0;
+    const result = await jevStar(graph, 'A', 'F', { client: oracle });
+    expect(oracle.calls).toBe(Object.keys(result.heuristics).length);
+  });
+
+  it('records heuristic and expand steps', async () => {
+    const result = await jevStar(graph, 'A', 'B', { client: oracle });
+    expect(result.steps[0]).toMatchObject({ type: 'heuristic', node: 'A' });
+    expect(result.steps.some((s) => s.type === 'expand' && s.node === 'A')).toBe(true);
+  });
+
+  it('works with the mock', async () => {
+    const result = await jevStar(graph, 'A', 'F', { client: new MockJev({ latency: false }) });
+    expect(result.reason).toBe('found');
+  });
+});

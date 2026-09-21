@@ -115,3 +115,5 @@ function pathTo(parent, node) {
 }
 
 export default jevFirstSearch;
+
+export { jevStar, DISTANCE_RUBRIC } from './star.js';

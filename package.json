@@ -25,7 +25,10 @@
   "scripts": {
     "test": "vitest run",
     "demo": "node ./bin/jev-first-search.js --mock examples/office.json desk coffee",
-    "prepublishOnly": "npm test"
+    "prepublishOnly": "npm test",
+    "media:record": "node scripts/record.js",
+    "media:record:mock": "node scripts/record.js --mock",
+    "media:render": "node scripts/render.mjs media/race.html media/race.mp4 && node scripts/render.mjs media/terminal.html media/terminal.mp4"
   },
   "keywords": [
     "graph",

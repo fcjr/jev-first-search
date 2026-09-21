@@ -79,6 +79,22 @@ Every step, Jev is offered `give_up` alongside the frontier. Jev may take it. No
   no path (jev gave up)
 ```
 
+## Jev*
+
+A* needs a heuristic. Jev* gets one over HTTP.
+
+```js
+import { jevStar } from 'jev-first-search';
+
+const result = await jevStar(graph, 'A', 'F');
+// every node discovered costs one `score` question:
+//   "How many edges is node D from node F?"
+//   0: It is the goal · 1: One edge · 2: Two edges · 3: Three edges · 4: Four or more
+// the expected score is h(n). g(n) is counted locally, like an animal.
+```
+
+Admissible? Consistent? Jev reports a confidence with every estimate, which is more than your Manhattan distance ever did.
+
 ## CLI
 
 ```
@@ -148,6 +164,18 @@ It is a number between 0 and 1.
 
 **Can I use this in production?**
 `noul: 0.03`
+
+## Animations
+
+`media/` holds the two animations from the announcement: a four-way race (BFS, DFS, Jev-first, Jev*) and a terminal replay of the CLI. They replay recorded Jev responses, not scripted ones.
+
+```
+npm run media:record        # runs the searches against Jev and writes media/traces.json into both pages
+npm run media:record:mock   # same, without an API key
+npm run media:render        # headless Chrome + ffmpeg → media/race.mp4, media/terminal.mp4
+```
+
+Open `media/race.html` or `media/terminal.html` in a browser to watch them loop.
 
 ## Development
 

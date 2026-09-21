@@ -1,0 +1,391 @@
+<title>Jev-First Search Race</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;1,9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+  :root {
+    --paper: #faf7ee;
+    --grid: #cfdde8;
+    --ink: #1f2a33;
+    --pencil: #8f9aa3;
+    --blue: #2456c8;
+    --blue-soft: #d9e3fa;
+    --red: #d63b2f;
+    --yellow: #f5d547;
+    --muted: #5d6a74;
+    --white: #ffffff;
+    color-scheme: light;
+  }
+  body { background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans", system-ui, sans-serif; padding-block: 32px; padding-inline: 16px; margin: 0; }
+  body.frame { padding: 0; overflow: hidden; }
+  .page { max-width: 1200px; margin: 0 auto; display: grid; gap: 20px; }
+  .frame .page { max-width: none; gap: 0; }
+  .lede { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .frame .lede, .frame .caption { display: none; }
+  h1 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 34px; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+  h1 em { font-style: italic; color: var(--red); }
+  .caption { color: var(--muted); max-width: 70ch; line-height: 1.5; margin: 0; }
+  .caption code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.92em; background: var(--white); padding: 1px 6px; border: 1px solid var(--grid); border-radius: 4px; }
+  button { font: 500 14px "IBM Plex Sans", system-ui, sans-serif; color: var(--ink); background: var(--white); border: 1.5px solid var(--ink); border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+  button:hover { background: var(--yellow); }
+  button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+  .stage-wrap { width: 100%; }
+  .stage {
+    width: 1200px; height: 676px; transform-origin: top left; box-sizing: border-box;
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 24px 24px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 24px 24px,
+      var(--paper);
+    border: 1.5px solid var(--ink);
+    display: grid; grid-template-rows: 62px 1fr 72px; padding: 0 28px; overflow: hidden;
+  }
+  .frame .stage { border: 0; }
+  .stage-head { display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid var(--ink); }
+  .stage-head .q { font-family: "Fraunces", Georgia, serif; font-size: 26px; font-weight: 600; }
+  .stage-head .q em { color: var(--red); font-style: italic; }
+  .stage-head .repo { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 14px; color: var(--muted); }
+  .cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; padding-top: 12px; align-content: start; }
+  .col { display: grid; grid-template-rows: auto auto auto; gap: 4px; min-width: 0; }
+  .col-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .col-head .name { font-family: "Fraunces", Georgia, serif; font-size: 21px; font-weight: 600; white-space: nowrap; }
+  .chip { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; padding: 2px 8px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--white); white-space: nowrap; }
+  .chip.jev { background: var(--yellow); }
+  svg { width: 100%; height: auto; display: block; }
+  .edge { stroke: var(--pencil); stroke-width: 2; fill: none; }
+  .edge.path { stroke: var(--red); stroke-width: 5; stroke-linecap: round; }
+  .node circle { fill: var(--white); stroke: var(--ink); stroke-width: 2; }
+  .node.frontier circle { fill: var(--blue-soft); stroke: var(--blue); }
+  .node.visited circle { fill: var(--ink); stroke: var(--ink); }
+  .node.current circle { fill: var(--yellow); stroke: var(--ink); stroke-width: 3; }
+  .node.onpath circle { fill: var(--red); stroke: var(--red); }
+  .node text.label { font: 600 15px "IBM Plex Mono", ui-monospace, monospace; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
+  .node.visited text.label, .node.onpath text.label { fill: var(--paper); }
+  .node.current text.label { fill: var(--ink); }
+  .node text.h { font: 500 11px "IBM Plex Mono", ui-monospace, monospace; fill: var(--blue); text-anchor: middle; }
+  .node.visited text.h, .node.onpath text.h { fill: var(--muted); }
+  .ring { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 3 3; }
+  .status { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; min-height: 40px; display: grid; align-content: start; gap: 3px; }
+  .status .line { display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .status .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--blue); animation: pulse 0.9s ease-in-out infinite; }
+  .status .bar { flex: none; display: inline-block; width: 60px; height: 8px; border: 1px solid var(--ink); background: var(--white); position: relative; }
+  .status .bar i { position: absolute; inset: 0; right: auto; background: var(--red); }
+  .status .dim { color: var(--muted); }
+  .status .done { color: var(--red); font-weight: 600; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1);} 50% { opacity: .35; transform: scale(.7);} }
+  .stage-foot { border-top: 1.5px solid var(--ink); display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; align-items: center; }
+  .tally { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; display: grid; grid-template-columns: auto auto; gap: 2px 14px; font-variant-numeric: tabular-nums; }
+  .tally b { font-weight: 600; }
+  .tally .cost { color: var(--red); font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) { .status .dot { animation: none; } }
+</style>
+
+<div class="page">
+  <div class="lede">
+    <h1>Same graph. Same goal. Two of them have an <em>API key.</em></h1>
+    <button id="replay" type="button">Replay</button>
+  </div>
+
+  <div class="stage-wrap" id="wrap">
+    <div class="stage" id="stage">
+      <div class="stage-head">
+        <div class="q" id="question">Find a path from <em>A</em> to <em>H</em></div>
+        <div class="repo" id="repo">github.com/fcjr/jev-first-search</div>
+      </div>
+      <div class="cols" id="cols"></div>
+      <div class="stage-foot" id="foot"></div>
+    </div>
+  </div>
+
+  <p class="caption" id="caption"></p>
+</div>
+
+<script id="traces" type="application/json">
+{"recordedAt":"2026-09-21T21:08:31.895Z","mock":true,"model":"jev-mock","race":{"graph":{"A":["B","C"],"B":["A","D","I"],"C":["A","E","J"],"D":["B","F","E"],"E":["C","D","G"],"F":["D","I","H"],"G":["E","J","H"],"H":["F","G"],"I":["B","F"],"J":["C","G"]},"start":"A","goal":"H","jfs":{"path":["A","B","D","F","H"],"reason":"found","visited":["A","B","C","D","I","E","J","F","G","H"],"steps":[{"type":"jev-first","noul":0.91,"ms":115.213875},{"type":"visit","frontier":["A"],"picked":"A","confidence":0.5922079925176886,"probabilities":{"A":0.5922079925176886,"give_up":0.40779200748231137},"ms":487.353458},{"type":"visit","frontier":["B","C"],"picked":"B","confidence":0.5579095202359401,"probabilities":{"B":0.5579095202359401,"C":0.22104523988202995,"give_up":0.22104523988202995},"ms":411.21387500000003},{"type":"visit","frontier":["C","D","I"],"picked":"C","confidence":0.5593532950245763,"probabilities":{"C":0.5593532950245763,"D":0.1468822349918079,"I":0.1468822349918079,"give_up":0.1468822349918079},"ms":119.23612500000013},{"type":"visit","frontier":["D","I","E","J"],"picked":"D","confidence":0.5859868266894341,"probabilities":{"D":0.5859868266894341,"I":0.10350329332764147,"E":0.10350329332764147,"J":0.10350329332764147,"give_up":0.10350329332764147},"ms":367.0383750000001},{"type":"visit","frontier":["I","E","J","F"],"picked":"I","confidence":0.6362936776572714,"probabilities":{"I":0.6362936776572714,"E":0.09092658058568215,"J":0.09092658058568215,"F":0.09092658058568215,"give_up":0.09092658058568215},"ms":346.25008300000013},{"type":"visit","frontier":["E","J","F"],"picked":"E","confidence":0.7185975849332993,"probabilities":{"E":0.7185975849332993,"J":0.09380080502223358,"F":0.09380080502223358,"give_up":0.09380080502223358},"ms":398.34408299999996},{"type":"visit","frontier":["J","F","G"],"picked":"J","confidence":0.5902475171451684,"probabilities":{"J":0.5902475171451684,"F":0.13658416095161052,"G":0.13658416095161052,"give_up":0.13658416095161052},"ms":141.42466699999977},{"type":"visit","frontier":["F","G"],"picked":"F","confidence":0.7918315656862934,"probabilities":{"F":0.7918315656862934,"G":0.10408421715685329,"give_up":0.10408421715685329},"ms":165.23912500000006},{"type":"visit","frontier":["G","H"],"picked":"G","confidence":0.7637624273203139,"probabilities":{"G":0.7637624273203139,"H":0.11811878633984307,"give_up":0.11811878633984307},"ms":166.23849999999993},{"type":"visit","frontier":["H"],"picked":"H","confidence":0.6148395874818099,"probabilities":{"H":0.6148395874818099,"give_up":0.3851604125181901},"ms":119.42312500000025}],"jevCalls":11,"inputTokens":652.25,"elapsedMs":2839.791167,"estimatedCostUsd":0.000027394500000000003},"jevStar":{"path":["A","B","D","F","H"],"reason":"found","visited":["A","B","D","C","E","J","F","I","G","H"],"steps":[{"type":"heuristic","node":"A","h":3.507234285192993,"confidence":0.30524930784972015,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":320.48754099999996},{"type":"heuristic","node":"B","h":1.040873702665376,"confidence":0.5505263874743858,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":455.2415000000001},{"type":"heuristic","node":"C","h":3.231688850929691,"confidence":0.5445925941538665,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":231.64249999999993},{"type":"expand","node":"A","g":0,"h":3.507234285192993,"open":[{"node":"B","g":1,"h":1.040873702665376,"f":2.040873702665376},{"node":"C","g":1,"h":3.231688850929691,"f":4.231688850929691}]},{"type":"heuristic","node":"D","h":1.2267846778351887,"confidence":0.4593239564602633,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":148.23937499999965},{"type":"heuristic","node":"I","h":3.2973672938026755,"confidence":0.5993594505911637,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":394.2162089999997},{"type":"expand","node":"B","g":1,"h":1.040873702665376,"open":[{"node":"C","g":1,"h":3.231688850929691,"f":4.231688850929691},{"node":"D","g":2,"h":1.2267846778351887,"f":3.2267846778351887},{"node":"I","g":2,"h":3.2973672938026755,"f":5.297367293802676}]},{"type":"heuristic","node":"F","h":2.245287909946606,"confidence":0.4139101454989851,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":350.324208},{"type":"heuristic","node":"E","h":1.9818013085734254,"confidence":0.5241890875546836,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":278.8143749999999},{"type":"expand","node":"D","g":2,"h":1.2267846778351887,"open":[{"node":"C","g":1,"h":3.231688850929691,"f":4.231688850929691},{"node":"I","g":2,"h":3.2973672938026755,"f":5.297367293802676},{"node":"F","g":3,"h":2.245287909946606,"f":5.245287909946606},{"node":"E","g":3,"h":1.9818013085734254,"f":4.981801308573425}]},{"type":"heuristic","node":"J","h":3.095233011223082,"confidence":0.5739255405002485,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":338.12887500000033},{"type":"expand","node":"C","g":1,"h":3.231688850929691,"open":[{"node":"E","g":2,"h":1.9818013085734254,"f":3.9818013085734254},{"node":"F","g":3,"h":2.245287909946606,"f":5.245287909946606},{"node":"I","g":2,"h":3.2973672938026755,"f":5.297367293802676},{"node":"J","g":2,"h":3.095233011223082,"f":5.0952330112230815}]},{"type":"heuristic","node":"G","h":3.0147482918968826,"confidence":0.3436388522314079,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":225.22629200000029},{"type":"expand","node":"E","g":2,"h":1.9818013085734254,"open":[{"node":"J","g":2,"h":3.095233011223082,"f":5.0952330112230815},{"node":"F","g":3,"h":2.245287909946606,"f":5.245287909946606},{"node":"I","g":2,"h":3.2973672938026755,"f":5.297367293802676},{"node":"G","g":3,"h":3.0147482918968826,"f":6.014748291896883}]},{"type":"expand","node":"J","g":2,"h":3.095233011223082,"open":[{"node":"F","g":3,"h":2.245287909946606,"f":5.245287909946606},{"node":"I","g":2,"h":3.2973672938026755,"f":5.297367293802676},{"node":"G","g":3,"h":3.0147482918968826,"f":6.014748291896883}]},{"type":"heuristic","node":"H","h":2.2362545539708987,"confidence":0.4775306653813267,"probabilities":{"0":0.2,"1":0.2,"2":0.2,"3":0.2,"4":0.2},"ms":136.2010419999997},{"type":"expand","node":"F","g":3,"h":2.245287909946606,"open":[{"node":"I","g":2,"h":3.2973672938026755,"f":5.297367293802676},{"node":"G","g":3,"h":3.0147482918968826,"f":6.014748291896883},{"node":"H","g":4,"h":2.2362545539708987,"f":6.236254553970898}]},{"type":"expand","node":"I","g":2,"h":3.2973672938026755,"open":[{"node":"G","g":3,"h":3.0147482918968826,"f":6.014748291896883},{"node":"H","g":4,"h":2.2362545539708987,"f":6.236254553970898}]},{"type":"expand","node":"G","g":3,"h":3.0147482918968826,"open":[{"node":"H","g":4,"h":2.2362545539708987,"f":6.236254553970898}]},{"type":"expand","node":"H","g":4,"h":2.2362545539708987,"open":[]}],"heuristics":{"A":3.507234285192993,"B":1.040873702665376,"C":3.231688850929691,"D":1.2267846778351887,"I":3.2973672938026755,"F":2.245287909946606,"E":1.9818013085734254,"J":3.095233011223082,"G":3.0147482918968826,"H":2.2362545539708987},"jevCalls":10,"inputTokens":892.5,"elapsedMs":2880.0219590000006,"estimatedCostUsd":0.000037485000000000004}},"terminal":[{"args":["examples/office.json","desk","coffee"],"result":{"path":["desk","hallway","kitchen","coffee"],"reason":"found","visited":["desk","hallway","window","kitchen","meeting_room","stairs","coffee"],"steps":[{"type":"jev-first","noul":0.91,"ms":394.2955000000002},{"type":"visit","frontier":["desk"],"picked":"desk","confidence":0.8384884455159433,"probabilities":{"desk":0.8384884455159433,"give_up":0.16151155448405674},"ms":347.2799160000004},{"type":"visit","frontier":["hallway","window"],"picked":"hallway","confidence":0.7062388117694842,"probabilities":{"hallway":0.7062388117694842,"window":0.1468805941152579,"give_up":0.1468805941152579},"ms":175.21695799999998},{"type":"visit","frontier":["window","kitchen","meeting_room","stairs"],"picked":"window","confidence":0.5971355013526816,"probabilities":{"window":0.5971355013526816,"kitchen":0.10071612466182961,"meeting_room":0.10071612466182961,"stairs":0.10071612466182961,"give_up":0.10071612466182961},"ms":229.18141599999944},{"type":"visit","frontier":["kitchen","meeting_room","stairs"],"picked":"kitchen","confidence":0.5572616123871581,"probabilities":{"kitchen":0.5572616123871581,"meeting_room":0.14757946253761398,"stairs":0.14757946253761398,"give_up":0.14757946253761398},"ms":94.2582080000002},{"type":"visit","frontier":["meeting_room","stairs","coffee"],"picked":"meeting_room","confidence":0.8956625460175518,"probabilities":{"meeting_room":0.8956625460175518,"stairs":0.03477915132748274,"coffee":0.03477915132748274,"give_up":0.03477915132748274},"ms":449.2457089999998},{"type":"visit","frontier":["stairs","coffee"],"picked":"stairs","confidence":0.6096526146633661,"probabilities":{"stairs":0.6096526146633661,"coffee":0.19517369266831697,"give_up":0.19517369266831697},"ms":79.39795799999956},{"type":"visit","frontier":["coffee","roof"],"picked":"coffee","confidence":0.7683052745780153,"probabilities":{"coffee":0.7683052745780153,"roof":0.11584736271099233,"give_up":0.11584736271099233},"ms":299.9205000000002}],"jevCalls":8,"inputTokens":556.25,"elapsedMs":2070.00425,"estimatedCostUsd":0.000023362500000000002}},{"args":["examples/office.json","desk","parking_lot"],"result":{"path":null,"reason":"frontier exhausted","visited":["desk","hallway","window","kitchen","meeting_room","stairs","coffee","roof"],"steps":[{"type":"jev-first","noul":0.91,"ms":271.79970800000046},{"type":"visit","frontier":["desk"],"picked":"desk","confidence":0.8786624251009839,"probabilities":{"desk":0.8786624251009839,"give_up":0.12133757489901609},"ms":352.177458000001},{"type":"visit","frontier":["hallway","window"],"picked":"hallway","confidence":0.6671559148014623,"probabilities":{"hallway":0.6671559148014623,"window":0.16642204259926885,"give_up":0.16642204259926885},"ms":302.472667},{"type":"visit","frontier":["window","kitchen","meeting_room","stairs"],"picked":"window","confidence":0.7704601319427152,"probabilities":{"window":0.7704601319427152,"kitchen":0.05738496701432119,"meeting_room":0.05738496701432119,"stairs":0.05738496701432119,"give_up":0.05738496701432119},"ms":136.1790000000001},{"type":"visit","frontier":["kitchen","meeting_room","stairs"],"picked":"kitchen","confidence":0.6029348155005407,"probabilities":{"kitchen":0.6029348155005407,"meeting_room":0.13235506149981976,"stairs":0.13235506149981976,"give_up":0.13235506149981976},"ms":138.1621669999986},{"type":"visit","frontier":["meeting_room","stairs","coffee"],"picked":"meeting_room","confidence":0.9499672207885927,"probabilities":{"meeting_room":0.9499672207885927,"stairs":0.016677593070469083,"coffee":0.016677593070469083,"give_up":0.016677593070469083},"ms":427.2101670000011},{"type":"visit","frontier":["stairs","coffee"],"picked":"stairs","confidence":0.7422170974983415,"probabilities":{"stairs":0.7422170974983415,"coffee":0.12889145125082924,"give_up":0.12889145125082924},"ms":366.82600000000093},{"type":"visit","frontier":["coffee","roof"],"picked":"coffee","confidence":0.5717755478601333,"probabilities":{"coffee":0.5717755478601333,"roof":0.21411222606993335,"give_up":0.21411222606993335},"ms":491.13837499999863},{"type":"visit","frontier":["roof"],"picked":"roof","confidence":0.9491149353402969,"probabilities":{"roof":0.9491149353402969,"give_up":0.050885064659703105},"ms":213.21604200000002}],"jevCalls":9,"inputTokens":637,"elapsedMs":2700.0733330000003,"estimatedCostUsd":0.000026754000000000005}},{"args":["examples/office.json","desk","roof"],"result":{"path":["desk","hallway","stairs","roof"],"reason":"found","visited":["desk","hallway","window","kitchen","meeting_room","stairs","coffee","roof"],"steps":[{"type":"jev-first","noul":0.91,"ms":429.1720830000013},{"type":"visit","frontier":["desk"],"picked":"desk","confidence":0.6850029818420179,"probabilities":{"desk":0.6850029818420179,"give_up":0.3149970181579821},"ms":461.10520799999904},{"type":"visit","frontier":["hallway","window"],"picked":"hallway","confidence":0.7323961489067754,"probabilities":{"hallway":0.7323961489067754,"window":0.1338019255466123,"give_up":0.1338019255466123},"ms":190.16412499999933},{"type":"visit","frontier":["window","kitchen","meeting_room","stairs"],"picked":"window","confidence":0.7404274104916673,"probabilities":{"window":0.7404274104916673,"kitchen":0.06489314737708318,"meeting_room":0.06489314737708318,"stairs":0.06489314737708318,"give_up":0.06489314737708318},"ms":369.47162500000013},{"type":"visit","frontier":["kitchen","meeting_room","stairs"],"picked":"kitchen","confidence":0.7043253052613082,"probabilities":{"kitchen":0.7043253052613082,"meeting_room":0.09855823157956393,"stairs":0.09855823157956393,"give_up":0.09855823157956393},"ms":100.08974999999919},{"type":"visit","frontier":["meeting_room","stairs","coffee"],"picked":"meeting_room","confidence":0.6019732104701602,"probabilities":{"meeting_room":0.6019732104701602,"stairs":0.13267559650994662,"coffee":0.13267559650994662,"give_up":0.13267559650994662},"ms":197.7474999999995},{"type":"visit","frontier":["stairs","coffee"],"picked":"stairs","confidence":0.6145571476270977,"probabilities":{"stairs":0.6145571476270977,"coffee":0.19272142618645116,"give_up":0.19272142618645116},"ms":402.69674999999916},{"type":"visit","frontier":["coffee","roof"],"picked":"coffee","confidence":0.9366014891918377,"probabilities":{"coffee":0.9366014891918377,"roof":0.03169925540408114,"give_up":0.03169925540408114},"ms":80.28166699999929},{"type":"visit","frontier":["roof"],"picked":"roof","confidence":0.7062274429804463,"probabilities":{"roof":0.7062274429804463,"give_up":0.29377255701955374},"ms":246.1644580000011}],"jevCalls":9,"inputTokens":621.25,"elapsedMs":2477.8339159999996,"estimatedCostUsd":0.000026092500000000005}}]}
+</script>
+
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  const FRAME_T = params.has('t') ? Number(params.get('t')) : null;
+  if (params.has('frame')) document.body.classList.add('frame');
+
+  const T = JSON.parse(document.getElementById('traces').textContent || '{}');
+  if (!T.race) {
+    document.getElementById('cols').innerHTML = '<p style="font-family:IBM Plex Mono,monospace">No traces recorded yet. Run <b>npm run media:record</b> (or <b>media:record:mock</b>).</p>';
+    return;
+  }
+  const R = T.race;
+  const ADJ = R.graph, START = R.start, GOAL = R.goal;
+  const NODES = Object.keys(ADJ);
+  const KNOWN = { A:[36,210], B:[116,96], C:[116,324], I:[196,30], D:[196,150], E:[196,270], J:[196,390], F:[276,96], G:[276,324], H:[336,210] };
+  const POS = {};
+  NODES.forEach((n, i) => {
+    POS[n] = KNOWN[n] ?? [186 + 160 * Math.cos((2 * Math.PI * i) / NODES.length), 210 + 170 * Math.sin((2 * Math.PI * i) / NODES.length)];
+  });
+  const EDGES = [];
+  for (const a in ADJ) for (const b of ADJ[a]) if (a < b) EDGES.push([a, b]);
+  const USD_PER_TOKEN = 0.042 / 1e6;
+
+  document.getElementById('question').innerHTML = `Find a path from <em>${START}</em> to <em>${GOAL}</em>`;
+  document.getElementById('caption').innerHTML =
+    `Breadth-first uses a queue. Depth-first uses a stack. Jev-first asks <code>${T.model ?? 'jev-latest'}</code> which frontier node to visit next, one request per node, and offers it <code>give_up</code> every time. Jev* is A* where the heuristic is a Jev <code>score</code> question, one request per node discovered. ` +
+    (T.mock ? 'These Jev answers are from the mock client, not the API.' : `The Jev answers and latencies are real, recorded ${new Date(T.recordedAt).toLocaleDateString()}. BFS and DFS timings are measured live in your browser.`);
+
+  // ---- classic searches, computed and timed here ----
+  function bfs() {
+    const parent = new Map([[START, null]]);
+    const queue = [START];
+    const steps = [];
+    while (queue.length) {
+      const v = queue.shift();
+      if (v !== GOAL) for (const n of ADJ[v]) if (!parent.has(n)) { parent.set(n, v); queue.push(n); }
+      steps.push({ picked: v, after: [...queue] });
+      if (v === GOAL) break;
+    }
+    return { steps, parent };
+  }
+  function dfs() {
+    const parent = new Map([[START, null]]);
+    const stack = [START];
+    const seen = new Set();
+    const steps = [];
+    while (stack.length) {
+      const v = stack.pop();
+      if (seen.has(v)) continue;
+      seen.add(v);
+      if (v !== GOAL) for (const n of ADJ[v]) if (!seen.has(n)) { if (!parent.has(n)) parent.set(n, v); stack.push(n); }
+      steps.push({ picked: v, after: [...new Set(stack.filter(n => !seen.has(n)))] });
+      if (v === GOAL) break;
+    }
+    return { steps, parent };
+  }
+  function pathOf(parent) {
+    if (!parent.has(GOAL)) return null;
+    const p = [];
+    for (let c = GOAL; c !== null; c = parent.get(c)) p.unshift(c);
+    return p;
+  }
+  function timeIt(fn) {
+    const t0 = performance.now();
+    let r;
+    for (let i = 0; i < 200; i++) r = fn();
+    return { result: r, ms: (performance.now() - t0) / 200 };
+  }
+  const B = timeIt(bfs), D = timeIt(dfs);
+
+  // ---- jev-first: timeline from the recorded steps ----
+  const T0 = 500, CLASSIC_STEP = 120, EXPAND_MS = 110;
+  const jfsEvents = [];
+  {
+    let cursor = T0;
+    const parent = new Map([[START, null]]);
+    let frontier = [START];
+    const perCall = R.jfs.jevCalls ? R.jfs.inputTokens / R.jfs.jevCalls : 0;
+    for (const s of R.jfs.steps) {
+      const ev = { ...s, begin: cursor, end: cursor + s.ms, tokens: perCall };
+      if (s.type === 'visit') {
+        ev.before = [...frontier];
+        if (frontier.includes(s.picked)) {
+          frontier = frontier.filter(n => n !== s.picked);
+          if (s.picked !== GOAL) for (const n of ADJ[s.picked] ?? []) if (!parent.has(n)) { parent.set(n, s.picked); frontier.push(n); }
+        }
+        ev.after = [...frontier];
+      }
+      jfsEvents.push(ev);
+      cursor = ev.end;
+    }
+    jfsEvents.done = cursor;
+  }
+
+  // ---- jev*: timeline from the recorded steps ----
+  const starEvents = [];
+  {
+    let cursor = T0;
+    const perCall = R.jevStar.jevCalls ? R.jevStar.inputTokens / R.jevStar.jevCalls : 0;
+    for (const s of R.jevStar.steps) {
+      const dur = s.type === 'heuristic' ? s.ms : EXPAND_MS;
+      starEvents.push({ ...s, begin: cursor, end: cursor + dur, tokens: s.type === 'heuristic' ? perCall : 0 });
+      cursor += dur;
+    }
+    starEvents.done = cursor;
+  }
+
+  const ALGOS = [
+    { key:'bfs', name:'Breadth-first', chip:'queue', steps:B.result.steps, path:pathOf(B.result.parent), ms:B.ms },
+    { key:'dfs', name:'Depth-first', chip:'stack', steps:D.result.steps, path:pathOf(D.result.parent), ms:D.ms },
+    { key:'jfs', name:'Jev-first', chip:'jev', events:jfsEvents, result:R.jfs },
+    { key:'star', name:'Jev*', chip:'jev + heap', events:starEvents, result:R.jevStar },
+  ];
+  const LOOP = Math.max(jfsEvents.done, starEvents.done, T0 + Math.max(B.result.steps.length, D.result.steps.length) * CLASSIC_STEP) + 2600;
+
+  // ---- DOM ----
+  const cols = document.getElementById('cols');
+  const foot = document.getElementById('foot');
+  const ui = {};
+  for (const a of ALGOS) {
+    const col = document.createElement('div');
+    col.className = 'col';
+    col.innerHTML = `
+      <div class="col-head"><span class="name">${a.name}</span><span class="chip ${a.key === 'jfs' || a.key === 'star' ? 'jev' : ''}">${a.chip}</span></div>
+      <svg viewBox="0 0 372 430" aria-label="${a.name} traversal">
+        <g>${EDGES.map(([x,y]) => `<line class="edge" data-e="${x}${y}" x1="${POS[x][0]}" y1="${POS[x][1]}" x2="${POS[y][0]}" y2="${POS[y][1]}"/>`).join('')}</g>
+        <g>${NODES.map(n => `<g class="node" data-n="${n}"><circle cx="${POS[n][0]}" cy="${POS[n][1]}" r="16"/>${n===GOAL?`<circle class="ring" cx="${POS[n][0]}" cy="${POS[n][1]}" r="22"/>`:''}<text class="label" x="${POS[n][0]}" y="${POS[n][1]}">${n}</text><text class="h" x="${POS[n][0]}" y="${POS[n][1] + 30}"></text></g>`).join('')}</g>
+      </svg>
+      <div class="status"></div>`;
+    cols.appendChild(col);
+    const tally = document.createElement('div');
+    tally.className = 'tally';
+    foot.appendChild(tally);
+    ui[a.key] = {
+      nodes: Object.fromEntries([...col.querySelectorAll('.node')].map(el => [el.dataset.n, el])),
+      hs: Object.fromEntries([...col.querySelectorAll('.node')].map(el => [el.dataset.n, el.querySelector('text.h')])),
+      edges: Object.fromEntries([...col.querySelectorAll('.edge')].map(el => [el.dataset.e, el])),
+      status: col.querySelector('.status'),
+      tally,
+    };
+  }
+
+  const fmtMs = (ms) => ms < 1 ? `${ms.toFixed(3)} ms` : `${Math.round(ms).toLocaleString()} ms`;
+  const fmtUsd = (usd) => `$${usd.toFixed(7)}`;
+  const bar = (p) => `<span class="bar"><i style="width:${Math.round(Math.max(0, Math.min(1, p))*100)}%"></i></span>`;
+  const arrows = (p) => p.join('→');
+
+  function paint(u, visited, frontier, current, path, hs) {
+    for (const n in u.nodes) {
+      const onpath = path && path.includes(n);
+      u.nodes[n].setAttribute('class', 'node' + (onpath ? ' onpath' : visited.has(n) ? ' visited' : frontier.has(n) ? ' frontier' : '') + (current === n && !path ? ' current' : ''));
+      u.hs[n].textContent = hs && hs[n] !== undefined ? `h ${hs[n].toFixed(1)}` : '';
+    }
+    for (const e in u.edges) {
+      const on = path && path.some((n, i) => i > 0 && (path[i-1] + n === e || n + path[i-1] === e));
+      u.edges[e].setAttribute('class', 'edge' + (on ? ' path' : ''));
+    }
+  }
+  function tally(u, visited, time, cost, calls) {
+    u.tally.innerHTML = `<span>visited <b>${visited}</b></span><span>time <b>${time}</b></span><span>cost <b class="${calls ? 'cost' : ''}">${cost}</b></span><span>API calls <b>${calls}</b></span>`;
+  }
+
+  function renderClassic(a, t) {
+    const u = ui[a.key];
+    const k = t < T0 ? 0 : Math.min(a.steps.length, Math.floor((t - T0) / CLASSIC_STEP) + 1);
+    const visited = new Set(a.steps.slice(0, k).map(s => s.picked));
+    const frontier = new Set(k > 0 ? a.steps[k-1].after : [START]);
+    const done = k === a.steps.length;
+    paint(u, visited, frontier, k > 0 ? a.steps[k-1].picked : null, done ? a.path : null);
+    u.status.innerHTML = k === 0
+      ? `<div class="line dim">${a.chip}: [${START}]</div>`
+      : done
+        ? `<div class="line done">path found · ${arrows(a.path)}</div><div class="line dim">${a.chip} emptied. no questions asked.</div>`
+        : `<div class="line">pop → <b>${a.steps[k-1].picked}</b></div><div class="line dim">${a.chip}: [${a.steps[k-1].after.join(', ')}]</div>`;
+    tally(u, visited.size, done ? fmtMs(a.ms) : '—', '$0', 0);
+  }
+
+  function renderJfs(a, t) {
+    const u = ui[a.key];
+    const ev = a.events, res = a.result;
+    const tt = Math.min(t, ev.done);
+    const completed = ev.filter(e => e.end <= tt);
+    const inFlight = ev.find(e => e.begin <= tt && tt < e.end);
+    const visits = completed.filter(e => e.type === 'visit');
+    const lastVisit = visits[visits.length - 1];
+    const visited = new Set(visits.filter(e => e.before.includes(e.picked)).map(e => e.picked));
+    const frontier = new Set(lastVisit ? lastVisit.after : [START]);
+    const finished = tt >= ev.done;
+    const found = finished && res.reason === 'found';
+    paint(u, visited, frontier, lastVisit ? lastVisit.picked : null, found ? res.path : null);
+
+    let html;
+    if (tt < T0) html = `<div class="line dim">jev: [${START}]</div>`;
+    else if (inFlight && inFlight.type === 'jev-first') html = `<div class="line"><span class="dot"></span>jev first · is ${GOAL} reachable? <span class="dim">${Math.round(tt - inFlight.begin)} ms</span></div>`;
+    else if (inFlight) {
+      html = `<div class="line"><span class="dot"></span>jev: next of [${inFlight.before.join(', ')}]? <span class="dim">${Math.round(tt - inFlight.begin)} ms</span></div>`;
+      if (lastVisit) html += `<div class="line dim">last → ${lastVisit.picked} · ${lastVisit.confidence.toFixed(2)} · give_up ${(lastVisit.probabilities?.give_up ?? 0).toFixed(2)}</div>`;
+    } else if (finished) {
+      html = found
+        ? `<div class="line done">path found · ${arrows(res.path)}</div><div class="line dim">jev never picked give_up. this time.</div>`
+        : res.reason === 'jev said no'
+          ? `<div class="line done">no path · jev said no</div><div class="line dim">0 nodes visited. 1 request. fastest way to not find something.</div>`
+          : `<div class="line done">no path · ${res.reason}</div><div class="line dim">${visited.size} nodes visited for nothing.</div>`;
+    } else {
+      const last = completed[completed.length - 1];
+      html = last.type === 'jev-first'
+        ? `<div class="line">jev first: reachable ${bar(last.noul)} ${last.noul.toFixed(2)} <span class="dim">${last.noul >= 0.5 ? 'ok, searching' : 'no.'}</span></div>`
+        : `<div class="line">→ <b>${last.picked}</b> ${bar(last.confidence)} ${last.confidence.toFixed(2)} <span class="dim">give_up ${(last.probabilities?.give_up ?? 0).toFixed(2)}</span></div>`;
+    }
+    u.status.innerHTML = html;
+    const calls = completed.length + (inFlight ? 1 : 0);
+    const tokens = completed.reduce((s, e) => s + e.tokens, 0) + (inFlight ? inFlight.tokens : 0);
+    tally(u, visited.size, tt < T0 ? '—' : fmtMs(Math.min(tt - T0, ev.done - T0)), fmtUsd(finished ? res.estimatedCostUsd : tokens * USD_PER_TOKEN), calls);
+  }
+
+  function renderStar(a, t) {
+    const u = ui[a.key];
+    const ev = a.events, res = a.result;
+    const tt = Math.min(t, ev.done);
+    const completed = ev.filter(e => e.end <= tt);
+    const inFlight = ev.find(e => e.begin <= tt && tt < e.end);
+    const expands = completed.filter(e => e.type === 'expand');
+    const lastExpand = expands[expands.length - 1];
+    const closed = new Set(expands.map(e => e.node));
+    const hs = {};
+    for (const e of completed) if (e.type === 'heuristic') hs[e.node] = e.h;
+    const open = new Set(lastExpand ? lastExpand.open.map(o => o.node) : []);
+    for (const e of completed) if (e.type === 'heuristic' && (!lastExpand || e.begin >= lastExpand.end) && !closed.has(e.node)) open.add(e.node);
+    if (!lastExpand && !closed.size) open.add(START);
+    const finished = tt >= ev.done;
+    const found = finished && res.reason === 'found';
+    paint(u, closed, open, lastExpand ? lastExpand.node : null, found ? res.path : null, hs);
+
+    let html;
+    if (tt < T0) html = `<div class="line dim">open: [${START}]</div>`;
+    else if (inFlight && inFlight.type === 'heuristic') {
+      html = `<div class="line"><span class="dot"></span>jev: h(${inFlight.node})? <span class="dim">${Math.round(tt - inFlight.begin)} ms</span></div>`;
+      if (lastExpand) html += `<div class="line dim">open: [${lastExpand.open.map(o => `${o.node} f${o.f.toFixed(1)}`).join(', ')}]</div>`;
+    } else if (inFlight) {
+      html = `<div class="line">expand <b>${inFlight.node}</b> · g ${inFlight.g} + h ${inFlight.h.toFixed(1)}</div><div class="line dim">open: [${inFlight.open.map(o => `${o.node} f${o.f.toFixed(1)}`).join(', ')}]</div>`;
+    } else if (finished) {
+      html = found
+        ? `<div class="line done">path found · ${arrows(res.path)}</div><div class="line dim">heuristic: ${res.jevCalls} HTTP requests. admissible? ask jev.</div>`
+        : `<div class="line done">no path · ${res.reason}</div>`;
+    } else {
+      const last = completed[completed.length - 1];
+      html = last.type === 'heuristic'
+        ? `<div class="line">h(${last.node}) = <b>${last.h.toFixed(2)}</b> ${bar(last.confidence)} ${last.confidence.toFixed(2)}</div>`
+        : `<div class="line">expand <b>${last.node}</b></div>`;
+    }
+    u.status.innerHTML = html;
+    const jevDone = completed.filter(e => e.type === 'heuristic');
+    const calls = jevDone.length + (inFlight && inFlight.type === 'heuristic' ? 1 : 0);
+    const jevMs = jevDone.reduce((s, e) => s + e.ms, 0) + (inFlight && inFlight.type === 'heuristic' ? tt - inFlight.begin : 0);
+    const tokens = jevDone.reduce((s, e) => s + e.tokens, 0) + (inFlight && inFlight.type === 'heuristic' ? inFlight.tokens : 0);
+    tally(u, closed.size, tt < T0 ? '—' : fmtMs(finished ? res.elapsedMs : jevMs), fmtUsd(finished ? res.estimatedCostUsd : tokens * USD_PER_TOKEN), calls);
+  }
+
+  function render(t) {
+    renderClassic(ALGOS[0], t);
+    renderClassic(ALGOS[1], t);
+    renderJfs(ALGOS[2], t);
+    renderStar(ALGOS[3], t);
+  }
+  window.__render = render;
+  window.__LOOP__ = LOOP;
+
+  const wrap = document.getElementById('wrap'), stage = document.getElementById('stage');
+  function fit() {
+    if (document.body.classList.contains('frame')) { stage.style.transform = ''; wrap.style.height = "676px"; return; }
+    const s = Math.min(1, wrap.clientWidth / 1200);
+    stage.style.transform = `scale(${s})`;
+    wrap.style.height = `${676 * s}px`;
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (FRAME_T !== null) { render(FRAME_T); return; }
+  if (reduced) { render(LOOP - 1); return; }
+
+  let origin = performance.now();
+  function tick(now) { render((now - origin) % LOOP); requestAnimationFrame(tick); }
+  requestAnimationFrame(tick);
+  document.getElementById('replay').addEventListener('click', () => { origin = performance.now(); });
+})();
+</script>
