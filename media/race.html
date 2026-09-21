@@ -1,86 +1,88 @@
 <title>Jev-First Search Race</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;1,9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap">
 <style>
   :root {
-    --paper: #faf7ee;
-    --grid: #cfdde8;
-    --ink: #1f2a33;
-    --pencil: #8f9aa3;
-    --blue: #2456c8;
-    --blue-soft: #d9e3fa;
-    --red: #d63b2f;
-    --yellow: #f5d547;
-    --muted: #5d6a74;
-    --white: #ffffff;
+    --ground: #f2f5f8;
+    --dot: #c9d5e0;
+    --ink: #14243a;
+    --muted: #5b6b7c;
+    --line: #aebccb;
+    --card: #ffffff;
+    --hl: #ffe66d;
+    --s-bfs: #2a78d6;
+    --s-jfs: #eb6834;
+    --s-dfs: #1baf7a;
+    --s-star: #eda100;
     color-scheme: light;
   }
-  body { background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans", system-ui, sans-serif; padding-block: 32px; padding-inline: 16px; margin: 0; }
+  body { background: var(--ground); color: var(--ink); font-family: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif; padding-block: 32px; padding-inline: 16px; margin: 0; font-variant-numeric: tabular-nums; }
   body.frame { padding: 0; overflow: hidden; }
-  .page { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .page { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .frame .page { max-width: none; gap: 0; }
-  .lede { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px; }
   .frame .lede, .frame .caption { display: none; }
-  h1 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 34px; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
-  h1 em { font-style: italic; color: var(--red); }
-  .caption { color: var(--muted); max-width: 70ch; line-height: 1.5; margin: 0; }
-  .caption code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.92em; background: var(--white); padding: 1px 6px; border: 1px solid var(--grid); border-radius: 4px; }
-  button { font: 500 14px "IBM Plex Sans", system-ui, sans-serif; color: var(--ink); background: var(--white); border: 1.5px solid var(--ink); border-radius: 6px; padding: 8px 14px; cursor: pointer; }
-  button:hover { background: var(--yellow); }
-  button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  .lede { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+  h1 { font-size: 40px; font-weight: 800; line-height: 1.02; letter-spacing: -0.025em; margin: 0; max-width: 22ch; text-wrap: balance; font-variation-settings: "opsz" 96; }
+  .caption, .intro { color: var(--muted); max-width: 64ch; line-height: 1.5; margin: 0; font-size: 15px; }
+  .caption code, .intro code { font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: .9em; background: var(--card); padding: 1px 6px; border: 1px solid var(--dot); border-radius: 4px; }
+  button { font: 600 14px "Bricolage Grotesque", sans-serif; color: var(--ink); background: var(--card); border: 1.5px solid var(--ink); border-radius: 999px; padding: 8px 16px; cursor: pointer; }
+  button:hover { background: var(--hl); }
+  button:focus-visible { outline: 3px solid var(--s-bfs); outline-offset: 2px; }
 
   .stage-wrap { width: 100%; min-width: 0; overflow: hidden; }
   .stage {
     width: 1200px; height: 676px; transform-origin: top left; box-sizing: border-box;
-    background:
-      linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 24px 24px,
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 24px 24px,
-      var(--paper);
-    border: 1.5px solid var(--ink);
-    display: grid; grid-template-rows: 62px 1fr 72px; padding: 0 28px; overflow: hidden;
+    background: radial-gradient(var(--dot) 1px, transparent 1.4px) 0 0 / 20px 20px, var(--ground);
+    border: 1.5px solid var(--line);
+    overflow: hidden;
   }
   .frame .stage { border: 0; }
+  .stage { display: grid; grid-template-rows: 64px 1fr 76px; padding: 0 28px; }
   .stage-head { display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid var(--ink); }
-  .stage-head .q { font-family: "Fraunces", Georgia, serif; font-size: 26px; font-weight: 600; }
-  .stage-head .q em { color: var(--red); font-style: italic; }
-  .stage-head .repo { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 14px; color: var(--muted); }
+  .stage-head .q { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; font-variation-settings: "opsz" 96; }
+  .stage-head .q em { font-style: normal; text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 4px; }
+  .stage-head .repo { text-align: right; line-height: 1.15; }
+  .stage-head .repo b { display: block; font-weight: 700; font-size: 15px; }
+  .stage-head .repo span { font-size: 12px; color: var(--muted); }
   .cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; padding-top: 12px; align-content: start; }
   .col { display: grid; grid-template-rows: auto auto auto; gap: 4px; min-width: 0; }
   .col-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .col-head .name { font-family: "Fraunces", Georgia, serif; font-size: 21px; font-weight: 600; white-space: nowrap; }
-  .chip { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; padding: 2px 8px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--white); white-space: nowrap; }
-  .chip.jev { background: var(--yellow); }
+  .col-head .name { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
+  .chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--card); white-space: nowrap; }
+  .chip.jev { background: var(--hl); }
   svg { width: 100%; height: auto; display: block; }
-  .edge { stroke: var(--pencil); stroke-width: 2; fill: none; }
-  .edge.path { stroke: var(--red); stroke-width: 5; stroke-linecap: round; }
-  .node circle { fill: var(--white); stroke: var(--ink); stroke-width: 2; }
-  .node.frontier circle { fill: var(--blue-soft); stroke: var(--blue); }
+  .edge { stroke: var(--line); stroke-width: 2; fill: none; }
+  .edge.path { stroke: var(--s-jfs); stroke-width: 5; stroke-linecap: round; }
+  .node circle { fill: var(--card); stroke: var(--ink); stroke-width: 2; }
+  .node.frontier circle { fill: #dbe7fa; stroke: var(--s-bfs); }
   .node.visited circle { fill: var(--ink); stroke: var(--ink); }
-  .node.current circle { fill: var(--yellow); stroke: var(--ink); stroke-width: 3; }
-  .node.onpath circle { fill: var(--red); stroke: var(--red); }
-  .node text.label { font: 600 15px "IBM Plex Mono", ui-monospace, monospace; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
-  .node.visited text.label, .node.onpath text.label { fill: var(--paper); }
+  .node.current circle { fill: var(--hl); stroke: var(--ink); stroke-width: 3; }
+  .node.onpath circle { fill: var(--s-jfs); stroke: var(--s-jfs); }
+  .node text.label { font: 700 15px "Bricolage Grotesque", sans-serif; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
+  .node.visited text.label, .node.onpath text.label { fill: var(--ground); }
   .node.current text.label { fill: var(--ink); }
-  .node text.h { font: 500 11px "IBM Plex Mono", ui-monospace, monospace; fill: var(--blue); text-anchor: middle; }
+  .node text.h { font: 600 11px "Bricolage Grotesque", sans-serif; fill: var(--s-bfs); text-anchor: middle; }
   .node.visited text.h, .node.onpath text.h { fill: var(--muted); }
   .ring { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 3 3; }
-  .status { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; min-height: 40px; display: grid; align-content: start; gap: 3px; }
-  .status .line { display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .status .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--blue); animation: pulse 0.9s ease-in-out infinite; }
-  .status .bar { flex: none; display: inline-block; width: 60px; height: 8px; border: 1px solid var(--ink); background: var(--white); position: relative; }
-  .status .bar i { position: absolute; inset: 0; right: auto; background: var(--red); }
+  .status { font-size: 13px; min-height: 40px; display: grid; align-content: start; gap: 3px; }
+  .status .line { display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; }
+  .status .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--s-bfs); animation: pulse 0.9s ease-in-out infinite; }
+  .status .bar { flex: none; display: inline-block; width: 60px; height: 8px; border: 1px solid var(--ink); background: var(--card); position: relative; }
+  .status .bar i { position: absolute; inset: 0; right: auto; background: var(--s-jfs); }
   .status .dim { color: var(--muted); }
-  .status .done { color: var(--red); font-weight: 600; }
+  .status .done { color: var(--s-jfs); font-weight: 700; }
   @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1);} 50% { opacity: .35; transform: scale(.7);} }
   .stage-foot { border-top: 1.5px solid var(--ink); display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; align-items: center; }
-  .tally { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; display: grid; grid-template-columns: auto auto; gap: 2px 14px; font-variant-numeric: tabular-nums; }
-  .tally b { font-weight: 600; }
-  .tally .cost { color: var(--red); font-weight: 600; }
+  .tally { display: grid; grid-template-columns: repeat(4, auto); justify-content: start; gap: 0 18px; }
+  .tally .cell { display: grid; line-height: 1.1; }
+  .tally b { font-weight: 700; font-size: 15px; }
+  .tally small { font-size: 11px; color: var(--muted); }
+  .tally .cost b { color: var(--s-jfs); }
   @media (prefers-reduced-motion: reduce) { .status .dot { animation: none; } }
 </style>
 
 <div class="page">
   <div class="lede">
-    <h1>Same graph. Same goal. Two of them have an <em>API key.</em></h1>
+    <h1>Same graph, same goal. Two of them have an API key.</h1>
     <button id="replay" type="button">Replay</button>
   </div>
 
@@ -88,7 +90,7 @@
     <div class="stage" id="stage">
       <div class="stage-head">
         <div class="q" id="question">Find a path from <em>A</em> to <em>H</em></div>
-        <div class="repo" id="repo">github.com/fcjr/jev-first-search</div>
+        <div class="repo" id="repo"><b>jev-first-search</b><span>github.com/fcjr/jev-first-search</span></div>
       </div>
       <div class="cols" id="cols"></div>
       <div class="stage-foot" id="foot"></div>
@@ -261,7 +263,7 @@
     }
   }
   function tally(u, visited, time, cost, calls) {
-    u.tally.innerHTML = `<span>visited <b>${visited}</b></span><span>time <b>${time}</b></span><span>cost <b class="${calls ? 'cost' : ''}">${cost}</b></span><span>API calls <b>${calls}</b></span>`;
+    u.tally.innerHTML = `<span class="cell"><b>${visited}</b><small>visited</small></span><span class="cell"><b>${time}</b><small>time</small></span><span class="cell ${calls ? 'cost' : ''}"><b>${cost}</b><small>cost</small></span><span class="cell"><b>${calls}</b><small>requests</small></span>`;
   }
 
   function renderClassic(a, t) {
@@ -272,10 +274,10 @@
     const done = k === a.steps.length;
     paint(u, visited, frontier, k > 0 ? a.steps[k-1].picked : null, done ? a.path : null);
     u.status.innerHTML = k === 0
-      ? `<div class="line dim">${a.chip}: [${START}]</div>`
+      ? `<div class="line dim">${a.chip}: ${START}</div>`
       : done
-        ? `<div class="line done">path found · ${arrows(a.path)}</div><div class="line dim">${a.chip} emptied. no questions asked.</div>`
-        : `<div class="line">pop → <b>${a.steps[k-1].picked}</b></div><div class="line dim">${a.chip}: [${a.steps[k-1].after.join(', ')}]</div>`;
+        ? `<div class="line done">Path found: ${arrows(a.path)}</div><div class="line dim">${a.chip} emptied, no questions asked</div>`
+        : `<div class="line">Pop <b>${a.steps[k-1].picked}</b></div><div class="line dim">${a.chip}: ${a.steps[k-1].after.join(', ') || 'empty'}</div>`;
     tally(u, visited.size, done ? fmtMs(a.ms) : '—', '$0', 0);
   }
 
@@ -294,22 +296,22 @@
     paint(u, visited, frontier, lastVisit ? lastVisit.picked : null, found ? res.path : null);
 
     let html;
-    if (tt < T0) html = `<div class="line dim">jev: [${START}]</div>`;
-    else if (inFlight && inFlight.type === 'jev-first') html = `<div class="line"><span class="dot"></span>jev first · is ${GOAL} reachable? <span class="dim">${Math.round(tt - inFlight.begin)} ms</span></div>`;
+    if (tt < T0) html = `<div class="line dim">frontier: ${START}</div>`;
+    else if (inFlight && inFlight.type === 'jev-first') html = `<div class="line"><span class="dot"></span>Jev first: is ${GOAL} reachable? <span class="dim">${Math.round(tt - inFlight.begin)} ms</span></div>`;
     else if (inFlight) {
-      html = `<div class="line"><span class="dot"></span>jev: next of [${inFlight.before.join(', ')}]? <span class="dim">${Math.round(tt - inFlight.begin)} ms</span></div>`;
-      if (lastVisit) html += `<div class="line dim">last → ${lastVisit.picked} · ${lastVisit.confidence.toFixed(2)} · give_up ${(lastVisit.probabilities?.give_up ?? 0).toFixed(2)}</div>`;
+      html = `<div class="line"><span class="dot"></span>Jev picks from [${inFlight.before.join(', ')}] <span class="dim">${Math.round(tt - inFlight.begin)} ms</span></div>`;
+      if (lastVisit) html += `<div class="line dim">Last pick ${lastVisit.picked} at ${lastVisit.confidence.toFixed(2)}, give_up ${(lastVisit.probabilities?.give_up ?? 0).toFixed(2)}</div>`;
     } else if (finished) {
       html = found
-        ? `<div class="line done">path found · ${arrows(res.path)}</div><div class="line dim">probably. p = ${(res.probability ?? 0).toFixed(2)}. never picked give_up.</div>`
+        ? `<div class="line done">Path found: ${arrows(res.path)}</div><div class="line dim">Probability ${(res.probability ?? 0).toFixed(2)}. Never picked give_up.</div>`
         : res.reason === 'jev said no'
-          ? `<div class="line done">no path · jev said no</div><div class="line dim">0 nodes visited. 1 request. fastest way to not find something.</div>`
-          : `<div class="line done">no path · ${res.reason}</div><div class="line dim">${visited.size} nodes visited for nothing.</div>`;
+          ? `<div class="line done">No path. Jev said no.</div><div class="line dim">0 nodes visited, 1 request. The fastest way to not find something.</div>`
+          : `<div class="line done">No path: ${res.reason}</div><div class="line dim">${visited.size} nodes visited for nothing.</div>`;
     } else {
       const last = completed[completed.length - 1];
       html = last.type === 'jev-first'
-        ? `<div class="line">jev first: reachable ${bar(last.noul)} ${last.noul.toFixed(2)} <span class="dim">${last.noul >= 0.5 ? 'ok, searching' : 'no.'}</span></div>`
-        : `<div class="line">→ <b>${last.picked}</b> ${bar(last.confidence)} ${last.confidence.toFixed(2)} <span class="dim">give_up ${(last.probabilities?.give_up ?? 0).toFixed(2)}</span></div>`;
+        ? `<div class="line">Reachable ${bar(last.noul)} ${last.noul.toFixed(2)} <span class="dim">${last.noul >= 0.5 ? 'so it searches' : 'so it stops'}</span></div>`
+        : `<div class="line">Picked <b>${last.picked}</b> ${bar(last.confidence)} ${last.confidence.toFixed(2)} <span class="dim">give_up ${(last.probabilities?.give_up ?? 0).toFixed(2)}</span></div>`;
     }
     u.status.innerHTML = html;
     const calls = completed.length + (inFlight ? 1 : 0);
@@ -336,21 +338,21 @@
     paint(u, closed, open, lastExpand ? lastExpand.node : null, found ? res.path : null, hs);
 
     let html;
-    if (tt < T0) html = `<div class="line dim">open: [${START}]</div>`;
+    if (tt < T0) html = `<div class="line dim">open: ${START}</div>`;
     else if (inFlight && inFlight.type === 'heuristic') {
-      html = `<div class="line"><span class="dot"></span>jev: h(${inFlight.node})? <span class="dim">${Math.round(tt - inFlight.begin)} ms</span></div>`;
-      if (lastExpand) html += `<div class="line dim">open: [${lastExpand.open.map(o => `${o.node} f${o.f.toFixed(1)}`).join(', ')}]</div>`;
+      html = `<div class="line"><span class="dot"></span>Jev estimates h(${inFlight.node}) <span class="dim">${Math.round(tt - inFlight.begin)} ms</span></div>`;
+      if (lastExpand) html += `<div class="line dim">Open: ${lastExpand.open.map(o => `${o.node} f${o.f.toFixed(1)}`).join(', ')}</div>`;
     } else if (inFlight) {
-      html = `<div class="line">expand <b>${inFlight.node}</b> · g ${inFlight.g} + h ${inFlight.h.toFixed(1)}</div><div class="line dim">open: [${inFlight.open.map(o => `${o.node} f${o.f.toFixed(1)}`).join(', ')}]</div>`;
+      html = `<div class="line">Expand <b>${inFlight.node}</b>, g ${inFlight.g} + h ${inFlight.h.toFixed(1)}</div><div class="line dim">Open: ${inFlight.open.map(o => `${o.node} f${o.f.toFixed(1)}`).join(', ')}</div>`;
     } else if (finished) {
       html = found
-        ? `<div class="line done">path found · ${arrows(res.path)}</div><div class="line dim">probably. p = ${(res.probability ?? 0).toFixed(2)}. admissible? ask jev.</div>`
-        : `<div class="line done">no path · ${res.reason}</div>`;
+        ? `<div class="line done">Path found: ${arrows(res.path)}</div><div class="line dim">Probability ${(res.probability ?? 0).toFixed(2)}. Admissible? Ask Jev.</div>`
+        : `<div class="line done">No path: ${res.reason}</div>`;
     } else {
       const last = completed[completed.length - 1];
       html = last.type === 'heuristic'
         ? `<div class="line">h(${last.node}) = <b>${last.h.toFixed(2)}</b> ${bar(last.confidence)} ${last.confidence.toFixed(2)}</div>`
-        : `<div class="line">expand <b>${last.node}</b></div>`;
+        : `<div class="line">Expand <b>${last.node}</b></div>`;
     }
     u.status.innerHTML = html;
     const jevDone = completed.filter(e => e.type === 'heuristic');

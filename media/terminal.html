@@ -1,46 +1,49 @@
 <title>Jev-First Search Terminal</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=Spline+Sans+Mono:wght@400;600&display=swap">
 <style>
   :root {
-    --bg: #1b1d21;
-    --bar: #2a2d33;
-    --fg: #e8e2d0;
-    --dim: #8a8676;
-    --amber: #f2b544;
-    --red: #e06c5c;
-    --blue: #7cb5e0;
-    --page: #eee9dc;
-    --page-ink: #1b1d21;
+    --ground: #f2f5f8;
+    --dot: #c9d5e0;
+    --ink: #14243a;
+    --muted: #5b6b7c;
+    --line: #aebccb;
+    --card: #ffffff;
+    --hl: #ffe66d;
+    --s-bfs: #2a78d6;
+    --s-jfs: #eb6834;
+    --s-dfs: #1baf7a;
+    --s-star: #eda100;
     color-scheme: light;
   }
-  body { background: var(--page); color: var(--page-ink); font-family: "IBM Plex Sans", system-ui, sans-serif; margin: 0; padding-block: 32px; padding-inline: 16px; }
-  body.frame { padding: 0; background: var(--bg); overflow: hidden; }
-  .page { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  body { background: var(--ground); color: var(--ink); font-family: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif; padding-block: 32px; padding-inline: 16px; margin: 0; font-variant-numeric: tabular-nums; }
+  body.frame { padding: 0; overflow: hidden; }
+  .page { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .frame .page { max-width: none; gap: 0; }
-  .lede { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 12px; }
   .frame .lede, .frame .caption { display: none; }
-  h1 { font: 500 24px/1.2 "IBM Plex Sans", system-ui, sans-serif; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
-  .caption { color: #5f5a4c; max-width: 70ch; line-height: 1.5; margin: 0; }
-  .caption code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .92em; background: #fff; border: 1px solid #d5cfbf; padding: 1px 6px; border-radius: 4px; }
-  button { font: 500 14px "IBM Plex Sans", system-ui, sans-serif; color: var(--page-ink); background: #fff; border: 1.5px solid var(--page-ink); border-radius: 6px; padding: 8px 14px; cursor: pointer; }
-  button:hover { background: var(--amber); }
-  button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
-
+  .lede { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+  h1 { font-size: 40px; font-weight: 800; line-height: 1.02; letter-spacing: -0.025em; margin: 0; max-width: 22ch; text-wrap: balance; font-variation-settings: "opsz" 96; }
+  .caption, .intro { color: var(--muted); max-width: 64ch; line-height: 1.5; margin: 0; font-size: 15px; }
+  .caption code, .intro code { font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: .9em; background: var(--card); padding: 1px 6px; border: 1px solid var(--dot); border-radius: 4px; }
+  button { font: 600 14px "Bricolage Grotesque", sans-serif; color: var(--ink); background: var(--card); border: 1.5px solid var(--ink); border-radius: 999px; padding: 8px 16px; cursor: pointer; }
+  button:hover { background: var(--hl); }
+  button:focus-visible { outline: 3px solid var(--s-bfs); outline-offset: 2px; }
+  :root { --bg: #171a1f; --bar: #262a31; --fg: #e9e6dd; --dim: #8b8a80; --amber: #f2b544; --red: #e06c5c; --blue: #7cb5e0; }
   .wrap { width: 100%; min-width: 0; overflow: hidden; }
   .term {
     width: 1200px; height: 676px; transform-origin: top left; box-sizing: border-box;
     background: var(--bg); color: var(--fg); border-radius: 12px; overflow: hidden;
     display: grid; grid-template-rows: 40px 1fr;
-    box-shadow: 0 24px 60px rgba(0,0,0,.25);
-    font: 400 17px/26px "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    box-shadow: 0 30px 60px -20px rgba(20, 36, 58, .35);
+    font: 400 16.5px/26px "Spline Sans Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   .frame .term { border-radius: 0; box-shadow: none; }
-  .titlebar { background: var(--bar); display: flex; align-items: center; padding: 0 16px; gap: 8px; color: var(--dim); font-size: 13px; }
+  .frame body, body.frame { background: var(--bg); }
+  .titlebar { background: var(--bar); display: flex; align-items: center; padding: 0 16px; gap: 8px; color: var(--dim); font-size: 13px; font-family: "Bricolage Grotesque", sans-serif; }
   .titlebar .dots { display: flex; gap: 7px; margin-right: 12px; }
   .titlebar .dots i { width: 12px; height: 12px; border-radius: 50%; display: block; }
   .titlebar .dots i:nth-child(1) { background: #e06c5c; } .titlebar .dots i:nth-child(2) { background: #f2b544; } .titlebar .dots i:nth-child(3) { background: #7bc47f; }
   .titlebar .title { flex: 1; text-align: center; margin-right: 60px; }
-  .screen { padding: 14px 24px; overflow: hidden; white-space: pre; font-variant-numeric: tabular-nums; }
+  .screen { padding: 14px 24px; overflow: hidden; white-space: pre; }
   .l { height: 26px; }
   .p { color: var(--amber); }
   .d { color: var(--dim); }
@@ -54,7 +57,7 @@
 
 <div class="page">
   <div class="lede">
-    <h1>jev-first-search, in the terminal</h1>
+    <h1>Three searches, one terminal.</h1>
     <button id="replay" type="button">Replay</button>
   </div>
   <div class="wrap" id="wrap">
@@ -83,7 +86,7 @@
     return;
   }
   document.getElementById('caption').innerHTML =
-    `Three runs of the CLI on <code>examples/office.json</code>. Every step is one request to <code>${T.model ?? 'jev-latest'}</code>. ` +
+    `Three runs of the CLI on <code>examples/office.json</code>. Every step is one request to <code>${T.model ?? 'jev-latest'}</code>, and the wait you see is how long it took. ` +
     (T.mock ? 'These answers are from the mock client, not the API.' : `The answers, confidences and latencies are real, recorded ${new Date(T.recordedAt).toLocaleDateString()}.`);
 
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
