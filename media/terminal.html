@@ -15,7 +15,7 @@
   }
   body { background: var(--page); color: var(--page-ink); font-family: "IBM Plex Sans", system-ui, sans-serif; margin: 0; padding-block: 32px; padding-inline: 16px; }
   body.frame { padding: 0; background: var(--bg); overflow: hidden; }
-  .page { max-width: 1200px; margin: 0 auto; display: grid; gap: 18px; }
+  .page { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
   .frame .page { max-width: none; gap: 0; }
   .lede { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 12px; }
   .frame .lede, .frame .caption { display: none; }
@@ -26,7 +26,7 @@
   button:hover { background: var(--amber); }
   button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
 
-  .wrap { width: 100%; }
+  .wrap { width: 100%; min-width: 0; overflow: hidden; }
   .term {
     width: 1200px; height: 676px; transform-origin: top left; box-sizing: border-box;
     background: var(--bg); color: var(--fg); border-radius: 12px; overflow: hidden;
@@ -175,6 +175,7 @@
   const wrap = document.getElementById('wrap'), term = document.getElementById('term');
   function fit() {
     if (document.body.classList.contains('frame')) { term.style.transform = ''; wrap.style.height = "676px"; return; }
+    if (!wrap.clientWidth) return;
     const s = Math.min(1, wrap.clientWidth / 1200);
     term.style.transform = `scale(${s})`;
     wrap.style.height = `${676 * s}px`;
@@ -187,7 +188,8 @@
   if (reduced) { render(LOOP - 1); return; }
 
   let origin = performance.now();
-  function tick(now) { render((now - origin) % LOOP); requestAnimationFrame(tick); }
+  let lastW = wrap.clientWidth;
+  function tick(now) { if (wrap.clientWidth !== lastW) { lastW = wrap.clientWidth; fit(); } render((now - origin) % LOOP); requestAnimationFrame(tick); }
   requestAnimationFrame(tick);
   document.getElementById('replay').addEventListener('click', () => { origin = performance.now(); });
 })();
