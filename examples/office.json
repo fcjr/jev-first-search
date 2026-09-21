@@ -1,10 +1,33 @@
 {
-  "desk": ["hallway", "window"],
-  "window": ["desk"],
-  "hallway": ["desk", "kitchen", "meeting_room", "stairs"],
-  "meeting_room": ["hallway"],
-  "stairs": ["hallway", "roof"],
-  "roof": ["stairs"],
-  "kitchen": ["hallway", "coffee"],
-  "coffee": ["kitchen"]
+  "desk": [
+    "hallway",
+    "window"
+  ],
+  "window": [
+    "desk"
+  ],
+  "hallway": [
+    "desk",
+    "kitchen",
+    "meeting_room",
+    "stairs"
+  ],
+  "meeting_room": [
+    "hallway"
+  ],
+  "stairs": [
+    "hallway",
+    "roof"
+  ],
+  "roof": [
+    "stairs"
+  ],
+  "kitchen": [
+    "hallway",
+    "coffee"
+  ],
+  "coffee": [
+    "kitchen"
+  ],
+  "parking_lot": []
 }

@@ -60,11 +60,11 @@ Every iteration is one `POST /v1/systemone`. Jev returns in 70–500 ms, which i
 Before searching, JFS asks Jev one `noul` question: *is the goal even reachable?* If Jev says no, JFS returns `null` after one API call and zero nodes visited.
 
 ```
-jev-first-search  desk → roof
+jev-first-search  desk → parking_lot
   jev first  reachable? █░░░░░░░░░ 0.12   288ms  no. not searching.
 
   no path (jev said no)
-  1 jev call · 288 ms · $0.0000034
+  1 jev call · 288 ms · $0.0000089
 ```
 
 This saves API calls by making an API call. Pass `{ jevFirst: false }` if you would rather find out the hard way.
