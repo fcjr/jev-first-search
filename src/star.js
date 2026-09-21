@@ -36,6 +36,7 @@ export async function jevStar(graph, start, goal, options = {}) {
   const finish = (path, reason) => ({
     path,
     reason,
+    probability: path ? steps.filter((s) => s.type === 'heuristic').reduce((p, s) => p * s.confidence, 1) : 0,
     visited,
     steps,
     heuristics: Object.fromEntries(h),

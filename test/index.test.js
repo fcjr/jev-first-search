@@ -38,6 +38,12 @@ describe('jevFirstSearch', () => {
     expect(result.reason).toBe('found');
     expect(result.jevCalls).toBe(5);
     expect(result.estimatedCostUsd).toBeCloseTo(500 * 0.042e-6, 12);
+    expect(result.probability).toBeCloseTo(0.9 * 0.7 ** 4, 10);
+  });
+
+  it('has no probability when there is no path', async () => {
+    const result = await jevFirstSearch(graph, 'A', 'F', { client: scripted([0.12]) });
+    expect(result.probability).toBe(0);
   });
 
   it('asks jev first and skips the search when jev says no', async () => {

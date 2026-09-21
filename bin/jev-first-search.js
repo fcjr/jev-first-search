@@ -37,5 +37,5 @@ options.onStep = (step) => {
 const result = await jevFirstSearch(graph, start, goal, options);
 
 console.log();
-console.log(result.path ? `  path: ${result.path.join(' → ')}` : `  no path (${result.reason})`);
+console.log(result.path ? `  path: ${result.path.join(' → ')}  (probably: ${result.probability.toFixed(2)})` : `  no path (${result.reason})`);
 console.log(`  ${result.jevCalls} jev call${result.jevCalls === 1 ? '' : 's'} · ${Math.round(result.elapsedMs)} ms · $${result.estimatedCostUsd.toFixed(7)}`);

@@ -24,7 +24,9 @@ const graph = {
 
 const result = await jevFirstSearch(graph, 'A', 'F');
 console.log(result.path);
-// ['A', 'C', 'E', 'F'] (confidence: 0.71)
+// ['A', 'C', 'E', 'F']
+console.log(result.probability);
+// 0.02 (probably)
 ```
 
 Set `TYPESAFE_API_KEY` before use. Requires Node.js 20+.
@@ -68,6 +70,24 @@ jev-first-search  desk → parking_lot
 ```
 
 This saves API calls by making an API call. Pass `{ jevFirst: false }` if you would rather find out the hard way.
+
+## Probably
+
+Every other search algorithm returns a path. JFS returns a path and a `probability`: the product of Jev's confidence at every step, times Jev's belief that the goal was reachable in the first place.
+
+The recorded run in `media/traces.json` found `A → B → D → F → H`. It is the shortest path. Its probability is 0.02, because at step 3 Jev picked `D` with confidence 0.07 and was right.
+
+| Search | Returns |
+| --- | --- |
+| Breadth-first | the shortest path |
+| Depth-first | a path |
+| Jev-first | a path, probably |
+
+Some things we now know, probably:
+
+- `probability` is never 1. Jev has doubts about `A` being the first node to visit from `A`.
+- A path with probability 0.02 and a path with probability 0.98 are both paths.
+- If you need the probability to be higher, ask again. This is called "probably-first search" and it is the same algorithm.
 
 ## Giving up
 
@@ -165,6 +185,30 @@ It is a number between 0 and 1.
 **Can I use this in production?**
 `noul: 0.03`
 
+## Benchmarks
+
+Real numbers. `npm run media:bench` ran all four searches on 5 random connected graphs at each of 8, 16, 32, 64, 128 nodes (jev-1.13.0, Sep 21 2026). Quality is optimal length ÷ found length, and 0 when the search gave up.
+
+| nodes | DFS quality | Jev-first found · quality | Jev* found · quality | Jev-first requests | Jev* requests | Jev* cost / 1M searches |
+| --- | --- | --- | --- | --- | --- | --- |
+| 8 | 95% | 5/5 · 95% | 5/5 · 100% | 4.2 | 7.4 | $159 |
+| 16 | 75% | 4/5 · 75% | 5/5 · 100% | 5.0 | 11.6 | $356 |
+| 32 | 61% | 4/5 · 80% | 5/5 · 100% | 5.4 | 13.6 | $654 |
+| 64 | 69% | 3/5 · 60% | 5/5 · 100% | 6.2 | 21.2 | $1777 |
+| 128 | 52% | 0/5 · 0% | 5/5 · 100% | 5.2 | 36.4 | $5887 |
+
+- Jev-first found a path in 16 of 25 graphs. The other 9 times it was offered `give_up` and took it. On 128-node graphs it gave up every time.
+- When Jev-first did find a path, it was the shortest one in 14 of 16 cases, after visiting about 4 nodes. It is a very good search algorithm until it isn't.
+- Jev* found the shortest path in 25 of 25 graphs. It asked Jev about 36 times per 128-node graph to do it.
+- On 128 nodes, Jev-first is 21,371× slower than breadth-first, which found the shortest path every time for $0.
+- Mean stated probability that a Jev-first path is correct: 2.2e-1.
+
+![Time to find a path](media/chart-time.png)
+![Cost vs quality](media/chart-frontier.png)
+![Pricing](media/chart-pricing.png)
+![Probably](media/chart-probably.png)
+![Path quality by graph size](media/chart-quality.png)
+
 ## Animations
 
 `media/` holds the two animations from the announcement: a four-way race (BFS, DFS, Jev-first, Jev*) and a terminal replay of the CLI. They replay recorded Jev responses, not scripted ones.
@@ -173,6 +217,8 @@ It is a number between 0 and 1.
 npm run media:record        # runs the searches against Jev and writes media/traces.json into both pages
 npm run media:record:mock   # same, without an API key
 npm run media:render        # headless Chrome + ffmpeg → media/race.mp4, media/terminal.mp4
+npm run media:bench         # the benchmark above → media/bench.json, media/charts.html
+npm run media:snap          # media/chart-*.png
 ```
 
 Open `media/race.html` or `media/terminal.html` in a browser to watch them loop.

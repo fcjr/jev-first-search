@@ -162,7 +162,8 @@
       "jevCalls": 6,
       "inputTokens": 2703,
       "elapsedMs": 1423.7758749999998,
-      "estimatedCostUsd": 0.00011352600000000001
+      "estimatedCostUsd": 0.00011352600000000001,
+      "probability": 0.021297830400000002
     },
     "jevStar": {
       "path": [
@@ -559,7 +560,8 @@
       "jevCalls": 10,
       "inputTokens": 5210,
       "elapsedMs": 1774.7425420000002,
-      "estimatedCostUsd": 0.00021882000000000002
+      "estimatedCostUsd": 0.00021882000000000002,
+      "probability": 0.08144963466558233
     }
   },
   "terminal": [
@@ -659,7 +661,8 @@
         "jevCalls": 5,
         "inputTokens": 2182,
         "elapsedMs": 898.2236250000001,
-        "estimatedCostUsd": 0.000091644
+        "estimatedCostUsd": 0.000091644,
+        "probability": 0.9114930000000001
       }
     },
     {
@@ -682,7 +685,8 @@
         "jevCalls": 1,
         "inputTokens": 435,
         "elapsedMs": 165.47379100000035,
-        "estimatedCostUsd": 0.000018270000000000003
+        "estimatedCostUsd": 0.000018270000000000003,
+        "probability": 0
       }
     },
     {
@@ -781,7 +785,8 @@
         "jevCalls": 5,
         "inputTokens": 2181,
         "elapsedMs": 991.4797920000001,
-        "estimatedCostUsd": 0.00009160200000000001
+        "estimatedCostUsd": 0.00009160200000000001,
+        "probability": 0.764181
       }
     }
   ]

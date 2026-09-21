@@ -1,0 +1,382 @@
+<title>Jev-First Search Benchmarks</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;1,9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+  :root {
+    --paper: #faf7ee;
+    --grid: #cfdde8;
+    --ink: #1f2a33;
+    --muted: #5d6a74;
+    --rule: #b9c6d0;
+    --white: #ffffff;
+    --yellow: #f5d547;
+    --s-bfs: #2a78d6;
+    --s-jfs: #eb6834;
+    --s-dfs: #1baf7a;
+    --s-star: #eda100;
+    color-scheme: light;
+  }
+  body { background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans", system-ui, sans-serif; padding-block: 32px; padding-inline: 16px; margin: 0; }
+  body.frame { padding: 0; overflow: hidden; }
+  .page { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .frame .page { max-width: none; gap: 0; }
+  .frame .lede, .frame .intro, .frame .fig-wrap:not(.only), .frame .table-wrap, .frame h2 { display: none; }
+  h1 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 36px; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+  h1 em { font-style: italic; color: var(--s-jfs); }
+  h2 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 22px; margin: 8px 0 0; }
+  .intro { color: var(--muted); max-width: 70ch; line-height: 1.5; margin: 0; }
+  .intro code, .note code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .92em; background: var(--white); padding: 1px 6px; border: 1px solid var(--grid); border-radius: 4px; }
+
+  .fig-wrap { width: 100%; min-width: 0; overflow: hidden; }
+  .stage {
+    width: 1200px; height: 676px; transform-origin: top left; box-sizing: border-box;
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 24px 24px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 24px 24px,
+      var(--paper);
+    border: 1.5px solid var(--ink);
+    display: grid; grid-template-rows: auto 1fr auto; padding: 22px 28px 18px; gap: 8px; overflow: hidden; position: relative;
+  }
+  .frame .stage { border: 0; }
+  .fig-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+  .fig-title { font-family: "Fraunces", Georgia, serif; font-size: 30px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+  .fig-title em { font-style: italic; color: var(--s-jfs); }
+  .fig-sub { color: var(--muted); font-size: 16px; margin: 4px 0 0; max-width: 78ch; }
+  .fig-repo { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 14px; color: var(--muted); white-space: nowrap; padding-top: 10px; }
+  .fig-body { min-height: 0; }
+  .fig-body svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .fig-foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; font-size: 13px; color: var(--muted); border-top: 1.5px solid var(--ink); padding-top: 8px; }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; color: var(--ink); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 14px; height: 4px; border-radius: 2px; display: inline-block; }
+  .note { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+  svg text { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; fill: var(--muted); }
+  svg .axis line, svg .axis path { stroke: var(--rule); stroke-width: 1; fill: none; }
+  svg .axis.base path { stroke: var(--ink); stroke-width: 1.5; }
+  svg .gridline { stroke: var(--grid); stroke-width: 1; }
+  svg .series { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+  svg .dot { stroke: var(--paper); stroke-width: 2; }
+  svg .dlabel { font-weight: 600; fill: var(--ink); font-size: 13px; }
+  svg .annot { fill: var(--ink); font-size: 13px; }
+  svg .annot.big { font-family: "Fraunces", Georgia, serif; font-size: 26px; font-weight: 600; }
+  svg .axis-title { fill: var(--muted); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+  svg .frontier { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 6 5; }
+  svg .hit { fill: transparent; cursor: default; }
+
+  #tip { position: fixed; pointer-events: none; background: var(--ink); color: var(--paper); font: 12px/1.4 "IBM Plex Mono", ui-monospace, monospace; padding: 6px 9px; border-radius: 4px; white-space: pre; opacity: 0; transition: opacity .1s; z-index: 10; }
+  #tip.on { opacity: 1; }
+
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; font-variant-numeric: tabular-nums; min-width: 700px; }
+  th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--grid); }
+  th { color: var(--muted); font-weight: 500; }
+  td:first-child, th:first-child, td:nth-child(2), th:nth-child(2) { text-align: left; }
+</style>
+
+<div class="page">
+  <div class="lede">
+    <h1>Benchmarks. <em>Probably.</em></h1>
+    <p class="intro" id="intro"></p>
+  </div>
+  <div id="figs"></div>
+  <h2>The numbers</h2>
+  <div class="table-wrap"><table id="table"></table></div>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script id="bench" type="application/json">
+{"recordedAt":"2026-09-21T21:22:17.307Z","mock":false,"model":"jev-1.13.0","sizes":[8,16,32,64,128],"iters":5,"runs":[{"size":8,"iter":0,"optimal":1,"algo":"bfs","found":true,"pathLength":1,"optimality":1,"visited":7,"jevCalls":0,"inputTokens":0,"elapsedMs":0.002593340000000026,"costUsd":0,"probability":null,"reason":"found"},{"size":8,"iter":0,"optimal":1,"algo":"dfs","found":true,"pathLength":1,"optimality":1,"visited":2,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0018891599999999898,"costUsd":0,"probability":null,"reason":"found"},{"size":8,"iter":0,"optimal":1,"algo":"jfs","found":true,"pathLength":1,"optimality":1,"visited":2,"jevCalls":3,"inputTokens":1424,"elapsedMs":726.7943339999999,"costUsd":0.00005980800000000001,"probability":0.8316,"reason":"found"},{"size":8,"iter":0,"optimal":1,"algo":"star","found":true,"pathLength":1,"optimality":1,"visited":2,"jevCalls":7,"inputTokens":3549,"elapsedMs":1283.142667,"costUsd":0.000149058,"probability":0.47038555872,"reason":"found"},{"size":8,"iter":1,"optimal":3,"algo":"bfs","found":true,"pathLength":3,"optimality":1,"visited":8,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0016349999999999908,"costUsd":0,"probability":null,"reason":"found"},{"size":8,"iter":1,"optimal":3,"algo":"dfs","found":true,"pathLength":3,"optimality":1,"visited":8,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0017600000000000194,"costUsd":0,"probability":null,"reason":"found"},{"size":8,"iter":1,"optimal":3,"algo":"jfs","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":5,"inputTokens":2409,"elapsedMs":1076.981292,"costUsd":0.00010117800000000001,"probability":0.12231647999999999,"reason":"found"},{"size":8,"iter":1,"optimal":3,"algo":"star","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":7,"inputTokens":3619,"elapsedMs":1196.649125,"costUsd":0.00015199800000000003,"probability":0.28335090567168,"reason":"found"},{"size":8,"iter":2,"optimal":3,"algo":"bfs","found":true,"pathLength":3,"optimality":1,"visited":8,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0005583400000000439,"costUsd":0,"probability":null,"reason":"found"},{"size":8,"iter":2,"optimal":3,"algo":"dfs","found":true,"pathLength":4,"optimality":0.75,"visited":5,"jevCalls":0,"inputTokens":0,"elapsedMs":0.00048083999999995794,"costUsd":0,"probability":null,"reason":"found"},{"size":8,"iter":2,"optimal":3,"algo":"jfs","found":true,"pathLength":4,"optimality":0.75,"visited":5,"jevCalls":6,"inputTokens":2562,"elapsedMs":1205.147458,"costUsd":0.00010760400000000001,"probability":0.25454710511999995,"reason":"found"},{"size":8,"iter":2,"optimal":3,"algo":"star","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":8,"inputTokens":3976,"elapsedMs":1443.767916,"costUsd":0.00016699200000000003,"probability":0.3916142096327999,"reason":"found"},{"size":8,"iter":3,"optimal":2,"algo":"bfs","found":true,"pathLength":2,"optimality":1,"visited":7,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0005883400000000449,"costUsd":0,"probability":null,"reason":"found"},{"size":8,"iter":3,"optimal":2,"algo":"dfs","found":true,"pathLength":2,"optimality":1,"visited":3,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0003883199999999931,"costUsd":0,"probability":null,"reason":"found"},{"size":8,"iter":3,"optimal":2,"algo":"jfs","found":true,"pathLength":2,"optimality":1,"visited":3,"jevCalls":4,"inputTokens":1898,"elapsedMs":937.0233330000001,"costUsd":0.00007971600000000001,"probability":0.3216153599999999,"reason":"found"},{"size":8,"iter":3,"optimal":2,"algo":"star","found":true,"pathLength":2,"optimality":1,"visited":5,"jevCalls":8,"inputTokens":4216,"elapsedMs":1384.1412919999998,"costUsd":0.00017707200000000001,"probability":0.3465625081049208,"reason":"found"},{"size":8,"iter":4,"optimal":1,"algo":"bfs","found":true,"pathLength":1,"optimality":1,"visited":7,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0006091800000000092,"costUsd":0,"probability":null,"reason":"found"},{"size":8,"iter":4,"optimal":1,"algo":"dfs","found":true,"pathLength":1,"optimality":1,"visited":2,"jevCalls":0,"inputTokens":0,"elapsedMs":0.00036082000000000393,"costUsd":0,"probability":null,"reason":"found"},{"size":8,"iter":4,"optimal":1,"algo":"jfs","found":true,"pathLength":1,"optimality":1,"visited":2,"jevCalls":3,"inputTokens":1424,"elapsedMs":725.4074169999999,"costUsd":0.00005980800000000001,"probability":0.9306,"reason":"found"},{"size":8,"iter":4,"optimal":1,"algo":"star","found":true,"pathLength":1,"optimality":1,"visited":2,"jevCalls":7,"inputTokens":3549,"elapsedMs":1211.848208,"costUsd":0.000149058,"probability":0.30917512733183994,"reason":"found"},{"size":16,"iter":0,"optimal":3,"algo":"bfs","found":true,"pathLength":3,"optimality":1,"visited":13,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0009924999999999784,"costUsd":0,"probability":null,"reason":"found"},{"size":16,"iter":0,"optimal":3,"algo":"dfs","found":true,"pathLength":5,"optimality":0.6,"visited":8,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0010666799999999909,"costUsd":0,"probability":null,"reason":"found"},{"size":16,"iter":0,"optimal":3,"algo":"jfs","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":5,"inputTokens":2746,"elapsedMs":1068.317708,"costUsd":0.00011533200000000001,"probability":0.40752557999999994,"reason":"found"},{"size":16,"iter":0,"optimal":3,"algo":"star","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":9,"inputTokens":6531,"elapsedMs":1576.2962089999999,"costUsd":0.00027430200000000003,"probability":0.11834229757193664,"reason":"found"},{"size":16,"iter":1,"optimal":3,"algo":"bfs","found":true,"pathLength":3,"optimality":1,"visited":16,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0038941799999975047,"costUsd":0,"probability":null,"reason":"found"},{"size":16,"iter":1,"optimal":3,"algo":"dfs","found":true,"pathLength":5,"optimality":0.6,"visited":16,"jevCalls":0,"inputTokens":0,"elapsedMs":0.004980000000000473,"costUsd":0,"probability":null,"reason":"found"},{"size":16,"iter":1,"optimal":3,"algo":"jfs","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":5,"inputTokens":3141,"elapsedMs":758.226958,"costUsd":0.00013192200000000003,"probability":0.17736186999999998,"reason":"found"},{"size":16,"iter":1,"optimal":3,"algo":"star","found":true,"pathLength":3,"optimality":1,"visited":5,"jevCalls":13,"inputTokens":9606,"elapsedMs":2250.285916,"costUsd":0.00040345200000000005,"probability":0.022994812350002013,"reason":"found"},{"size":16,"iter":2,"optimal":3,"algo":"bfs","found":true,"pathLength":3,"optimality":1,"visited":16,"jevCalls":0,"inputTokens":0,"elapsedMs":0.008409159999996519,"costUsd":0,"probability":null,"reason":"found"},{"size":16,"iter":2,"optimal":3,"algo":"dfs","found":true,"pathLength":4,"optimality":0.75,"visited":12,"jevCalls":0,"inputTokens":0,"elapsedMs":0.013246680000002016,"costUsd":0,"probability":null,"reason":"found"},{"size":16,"iter":2,"optimal":3,"algo":"jfs","found":true,"pathLength":4,"optimality":0.75,"visited":5,"jevCalls":6,"inputTokens":3887,"elapsedMs":1020.2494159999999,"costUsd":0.00016325400000000002,"probability":0.043173744768,"reason":"found"},{"size":16,"iter":2,"optimal":3,"algo":"star","found":true,"pathLength":3,"optimality":1,"visited":5,"jevCalls":14,"inputTokens":10398,"elapsedMs":2593.7908329999996,"costUsd":0.0004367160000000001,"probability":0.017112001691521165,"reason":"found"},{"size":16,"iter":3,"optimal":3,"algo":"bfs","found":true,"pathLength":3,"optimality":1,"visited":10,"jevCalls":0,"inputTokens":0,"elapsedMs":0.004721660000004704,"costUsd":0,"probability":null,"reason":"found"},{"size":16,"iter":3,"optimal":3,"algo":"dfs","found":true,"pathLength":3,"optimality":1,"visited":16,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0041616599999997565,"costUsd":0,"probability":null,"reason":"found"},{"size":16,"iter":3,"optimal":3,"algo":"jfs","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":5,"inputTokens":2727,"elapsedMs":895.3455839999997,"costUsd":0.00011453400000000001,"probability":0.242112,"reason":"found"},{"size":16,"iter":3,"optimal":3,"algo":"star","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":9,"inputTokens":6410,"elapsedMs":1333.5674159999999,"costUsd":0.00026922000000000003,"probability":0.05938299017038082,"reason":"found"},{"size":16,"iter":4,"optimal":4,"algo":"bfs","found":true,"pathLength":4,"optimality":1,"visited":14,"jevCalls":0,"inputTokens":0,"elapsedMs":0.003555820000001404,"costUsd":0,"probability":null,"reason":"found"},{"size":16,"iter":4,"optimal":4,"algo":"dfs","found":true,"pathLength":5,"optimality":0.8,"visited":10,"jevCalls":0,"inputTokens":0,"elapsedMs":0.003561659999995754,"costUsd":0,"probability":null,"reason":"found"},{"size":16,"iter":4,"optimal":4,"algo":"jfs","found":false,"pathLength":null,"optimality":0,"visited":2,"jevCalls":4,"inputTokens":2212,"elapsedMs":663.3699999999999,"costUsd":0.00009290400000000002,"probability":0,"reason":"jev gave up"},{"size":16,"iter":4,"optimal":4,"algo":"star","found":true,"pathLength":4,"optimality":1,"visited":5,"jevCalls":13,"inputTokens":9392,"elapsedMs":2083.3701249999995,"costUsd":0.0003944640000000001,"probability":0.03638041277404885,"reason":"found"},{"size":32,"iter":0,"optimal":3,"algo":"bfs","found":true,"pathLength":3,"optimality":1,"visited":22,"jevCalls":0,"inputTokens":0,"elapsedMs":0.009437499999994542,"costUsd":0,"probability":null,"reason":"found"},{"size":32,"iter":0,"optimal":3,"algo":"dfs","found":true,"pathLength":3,"optimality":1,"visited":5,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0067566600000009205,"costUsd":0,"probability":null,"reason":"found"},{"size":32,"iter":0,"optimal":3,"algo":"jfs","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":5,"inputTokens":3356,"elapsedMs":813.1390410000004,"costUsd":0.00014095200000000002,"probability":0.23054304239999998,"reason":"found"},{"size":32,"iter":0,"optimal":3,"algo":"star","found":true,"pathLength":3,"optimality":1,"visited":7,"jevCalls":15,"inputTokens":17420,"elapsedMs":2617.363,"costUsd":0.0007316400000000001,"probability":0.004829821276430867,"reason":"found"},{"size":32,"iter":1,"optimal":3,"algo":"bfs","found":true,"pathLength":3,"optimality":1,"visited":27,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0425316599999951,"costUsd":0,"probability":null,"reason":"found"},{"size":32,"iter":1,"optimal":3,"algo":"dfs","found":true,"pathLength":7,"optimality":0.42857142857142855,"visited":27,"jevCalls":0,"inputTokens":0,"elapsedMs":0.013678339999996751,"costUsd":0,"probability":null,"reason":"found"},{"size":32,"iter":1,"optimal":3,"algo":"jfs","found":false,"pathLength":null,"optimality":0,"visited":5,"jevCalls":7,"inputTokens":5308,"elapsedMs":1059.7629580000003,"costUsd":0.00022293600000000002,"probability":0,"reason":"jev gave up"},{"size":32,"iter":1,"optimal":3,"algo":"star","found":true,"pathLength":3,"optimality":1,"visited":5,"jevCalls":17,"inputTokens":19047,"elapsedMs":2922.444042,"costUsd":0.0007999740000000001,"probability":0.005475585178569696,"reason":"found"},{"size":32,"iter":2,"optimal":3,"algo":"bfs","found":true,"pathLength":3,"optimality":1,"visited":28,"jevCalls":0,"inputTokens":0,"elapsedMs":0.010891680000004272,"costUsd":0,"probability":null,"reason":"found"},{"size":32,"iter":2,"optimal":3,"algo":"dfs","found":true,"pathLength":6,"optimality":0.5,"visited":20,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0106366799999887,"costUsd":0,"probability":null,"reason":"found"},{"size":32,"iter":2,"optimal":3,"algo":"jfs","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":5,"inputTokens":3584,"elapsedMs":986.1001669999996,"costUsd":0.00015052800000000003,"probability":0.18251324189999998,"reason":"found"},{"size":32,"iter":2,"optimal":3,"algo":"star","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":12,"inputTokens":13778,"elapsedMs":2925.4352500000005,"costUsd":0.0005786760000000001,"probability":0.01756814372535135,"reason":"found"},{"size":32,"iter":3,"optimal":3,"algo":"bfs","found":true,"pathLength":3,"optimality":1,"visited":19,"jevCalls":0,"inputTokens":0,"elapsedMs":0.012935820000002422,"costUsd":0,"probability":null,"reason":"found"},{"size":32,"iter":3,"optimal":3,"algo":"dfs","found":true,"pathLength":5,"optimality":0.6,"visited":27,"jevCalls":0,"inputTokens":0,"elapsedMs":0.018748319999995145,"costUsd":0,"probability":null,"reason":"found"},{"size":32,"iter":3,"optimal":3,"algo":"jfs","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":5,"inputTokens":3280,"elapsedMs":837.4822919999997,"costUsd":0.00013776,"probability":0.50906394,"reason":"found"},{"size":32,"iter":3,"optimal":3,"algo":"star","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":10,"inputTokens":11482,"elapsedMs":2295.9146250000003,"costUsd":0.00048224400000000005,"probability":0.027698058435801604,"reason":"found"},{"size":32,"iter":4,"optimal":3,"algo":"bfs","found":true,"pathLength":3,"optimality":1,"visited":26,"jevCalls":0,"inputTokens":0,"elapsedMs":0.011314999999995053,"costUsd":0,"probability":null,"reason":"found"},{"size":32,"iter":4,"optimal":3,"algo":"dfs","found":true,"pathLength":6,"optimality":0.5,"visited":11,"jevCalls":0,"inputTokens":0,"elapsedMs":0.008863339999988966,"costUsd":0,"probability":null,"reason":"found"},{"size":32,"iter":4,"optimal":3,"algo":"jfs","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":5,"inputTokens":3788,"elapsedMs":882.6169580000005,"costUsd":0.000159096,"probability":0.20919646439999998,"reason":"found"},{"size":32,"iter":4,"optimal":3,"algo":"star","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":14,"inputTokens":16186,"elapsedMs":3176.284834000001,"costUsd":0.0006798120000000001,"probability":0.006704504980607588,"reason":"found"},{"size":64,"iter":0,"optimal":3,"algo":"bfs","found":true,"pathLength":3,"optimality":1,"visited":48,"jevCalls":0,"inputTokens":0,"elapsedMs":0.021675839999988965,"costUsd":0,"probability":null,"reason":"found"},{"size":64,"iter":0,"optimal":3,"algo":"dfs","found":true,"pathLength":11,"optimality":0.2727272727272727,"visited":60,"jevCalls":0,"inputTokens":0,"elapsedMs":0.022600840000013705,"costUsd":0,"probability":null,"reason":"found"},{"size":64,"iter":0,"optimal":3,"algo":"jfs","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":5,"inputTokens":5530,"elapsedMs":888.4120419999999,"costUsd":0.00023226000000000003,"probability":0.18057362399999996,"reason":"found"},{"size":64,"iter":0,"optimal":3,"algo":"star","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":22,"inputTokens":43370,"elapsedMs":4551.772290999999,"costUsd":0.0018215400000000002,"probability":0.0004824017562967046,"reason":"found"},{"size":64,"iter":1,"optimal":3,"algo":"bfs","found":true,"pathLength":3,"optimality":1,"visited":37,"jevCalls":0,"inputTokens":0,"elapsedMs":0.031632499999996073,"costUsd":0,"probability":null,"reason":"found"},{"size":64,"iter":1,"optimal":3,"algo":"dfs","found":true,"pathLength":5,"optimality":0.6,"visited":34,"jevCalls":0,"inputTokens":0,"elapsedMs":0.015736660000002303,"costUsd":0,"probability":null,"reason":"found"},{"size":64,"iter":1,"optimal":3,"algo":"jfs","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":5,"inputTokens":5367,"elapsedMs":1307.8529170000002,"costUsd":0.00022541400000000003,"probability":0.3200379336,"reason":"found"},{"size":64,"iter":1,"optimal":3,"algo":"star","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":23,"inputTokens":46078,"elapsedMs":4173.118875,"costUsd":0.0019352760000000003,"probability":0.000006178302346394882,"reason":"found"},{"size":64,"iter":2,"optimal":3,"algo":"bfs","found":true,"pathLength":3,"optimality":1,"visited":28,"jevCalls":0,"inputTokens":0,"elapsedMs":0.013940000000002329,"costUsd":0,"probability":null,"reason":"found"},{"size":64,"iter":2,"optimal":3,"algo":"dfs","found":true,"pathLength":3,"optimality":1,"visited":36,"jevCalls":0,"inputTokens":0,"elapsedMs":0.029111680000005434,"costUsd":0,"probability":null,"reason":"found"},{"size":64,"iter":2,"optimal":3,"algo":"jfs","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":5,"inputTokens":4933,"elapsedMs":1481.5339169999997,"costUsd":0.00020718600000000002,"probability":0.43741078920000004,"reason":"found"},{"size":64,"iter":2,"optimal":3,"algo":"star","found":true,"pathLength":3,"optimality":1,"visited":4,"jevCalls":14,"inputTokens":28032,"elapsedMs":2535.7088330000006,"costUsd":0.001177344,"probability":0.0004921872894188722,"reason":"found"},{"size":64,"iter":3,"optimal":3,"algo":"bfs","found":true,"pathLength":3,"optimality":1,"visited":36,"jevCalls":0,"inputTokens":0,"elapsedMs":0.01890666000001147,"costUsd":0,"probability":null,"reason":"found"},{"size":64,"iter":3,"optimal":3,"algo":"dfs","found":true,"pathLength":3,"optimality":1,"visited":56,"jevCalls":0,"inputTokens":0,"elapsedMs":0.02219999999999345,"costUsd":0,"probability":null,"reason":"found"},{"size":64,"iter":3,"optimal":3,"algo":"jfs","found":false,"pathLength":null,"optimality":0,"visited":2,"jevCalls":4,"inputTokens":3973,"elapsedMs":723.7248330000002,"costUsd":0.00016686600000000002,"probability":0,"reason":"jev gave up"},{"size":64,"iter":3,"optimal":3,"algo":"star","found":true,"pathLength":3,"optimality":1,"visited":5,"jevCalls":19,"inputTokens":37739,"elapsedMs":3594.5265419999996,"costUsd":0.0015850380000000002,"probability":0.00011848411588691116,"reason":"found"},{"size":64,"iter":4,"optimal":4,"algo":"bfs","found":true,"pathLength":4,"optimality":1,"visited":53,"jevCalls":0,"inputTokens":0,"elapsedMs":0.011953320000029634,"costUsd":0,"probability":null,"reason":"found"},{"size":64,"iter":4,"optimal":4,"algo":"dfs","found":true,"pathLength":7,"optimality":0.5714285714285714,"visited":30,"jevCalls":0,"inputTokens":0,"elapsedMs":0.010375840000015159,"costUsd":0,"probability":null,"reason":"found"},{"size":64,"iter":4,"optimal":4,"algo":"jfs","found":false,"pathLength":null,"optimality":0,"visited":10,"jevCalls":12,"inputTokens":11612,"elapsedMs":2410.712749999999,"costUsd":0.00048770400000000005,"probability":0,"reason":"jev gave up"},{"size":64,"iter":4,"optimal":4,"algo":"star","found":true,"pathLength":4,"optimality":1,"visited":9,"jevCalls":28,"inputTokens":56352,"elapsedMs":4927.742042,"costUsd":0.0023667840000000002,"probability":0.000002932554834249371,"reason":"found"},{"size":128,"iter":0,"optimal":5,"algo":"bfs","found":true,"pathLength":5,"optimality":1,"visited":115,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0462358200000017,"costUsd":0,"probability":null,"reason":"found"},{"size":128,"iter":0,"optimal":5,"algo":"dfs","found":true,"pathLength":5,"optimality":1,"visited":74,"jevCalls":0,"inputTokens":0,"elapsedMs":0.037243339999986344,"costUsd":0,"probability":null,"reason":"found"},{"size":128,"iter":0,"optimal":5,"algo":"jfs","found":false,"pathLength":null,"optimality":0,"visited":6,"jevCalls":8,"inputTokens":11330,"elapsedMs":1526.5662089999987,"costUsd":0.00047586000000000004,"probability":0,"reason":"jev gave up"},{"size":128,"iter":0,"optimal":5,"algo":"star","found":true,"pathLength":5,"optimality":1,"visited":15,"jevCalls":44,"inputTokens":169398,"elapsedMs":8282.497375000003,"costUsd":0.007114716000000001,"probability":1.4284173931464142e-12,"reason":"found"},{"size":128,"iter":1,"optimal":4,"algo":"bfs","found":true,"pathLength":4,"optimality":1,"visited":86,"jevCalls":0,"inputTokens":0,"elapsedMs":0.036397499999984574,"costUsd":0,"probability":null,"reason":"found"},{"size":128,"iter":1,"optimal":4,"algo":"dfs","found":true,"pathLength":10,"optimality":0.4,"visited":90,"jevCalls":0,"inputTokens":0,"elapsedMs":0.038839159999988625,"costUsd":0,"probability":null,"reason":"found"},{"size":128,"iter":1,"optimal":4,"algo":"jfs","found":false,"pathLength":null,"optimality":0,"visited":1,"jevCalls":3,"inputTokens":5013,"elapsedMs":406.7597080000014,"costUsd":0.00021054600000000004,"probability":0,"reason":"jev gave up"},{"size":128,"iter":1,"optimal":4,"algo":"star","found":true,"pathLength":4,"optimality":1,"visited":12,"jevCalls":40,"inputTokens":153642,"elapsedMs":7191.922291999999,"costUsd":0.006452964000000001,"probability":5.698646034979961e-11,"reason":"found"},{"size":128,"iter":2,"optimal":5,"algo":"bfs","found":true,"pathLength":5,"optimality":1,"visited":117,"jevCalls":0,"inputTokens":0,"elapsedMs":0.04704168000000209,"costUsd":0,"probability":null,"reason":"found"},{"size":128,"iter":2,"optimal":5,"algo":"dfs","found":true,"pathLength":11,"optimality":0.45454545454545453,"visited":102,"jevCalls":0,"inputTokens":0,"elapsedMs":0.055754180000003546,"costUsd":0,"probability":null,"reason":"found"},{"size":128,"iter":2,"optimal":5,"algo":"jfs","found":false,"pathLength":null,"optimality":0,"visited":5,"jevCalls":7,"inputTokens":9675,"elapsedMs":1209.774125,"costUsd":0.00040635000000000004,"probability":0,"reason":"jev gave up"},{"size":128,"iter":2,"optimal":5,"algo":"star","found":true,"pathLength":5,"optimality":1,"visited":16,"jevCalls":49,"inputTokens":188942,"elapsedMs":8730.464542,"costUsd":0.007935564,"probability":7.487456228404716e-11,"reason":"found"},{"size":128,"iter":3,"optimal":4,"algo":"bfs","found":true,"pathLength":4,"optimality":1,"visited":105,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0433258399999977,"costUsd":0,"probability":null,"reason":"found"},{"size":128,"iter":3,"optimal":4,"algo":"dfs","found":true,"pathLength":15,"optimality":0.26666666666666666,"visited":81,"jevCalls":0,"inputTokens":0,"elapsedMs":0.04526249999998981,"costUsd":0,"probability":null,"reason":"found"},{"size":128,"iter":3,"optimal":4,"algo":"jfs","found":false,"pathLength":null,"optimality":0,"visited":3,"jevCalls":5,"inputTokens":7043,"elapsedMs":872.3017909999999,"costUsd":0.000295806,"probability":0,"reason":"jev gave up"},{"size":128,"iter":3,"optimal":4,"algo":"star","found":true,"pathLength":4,"optimality":1,"visited":6,"jevCalls":28,"inputTokens":108126,"elapsedMs":4917.403124999999,"costUsd":0.004541292000000001,"probability":1.0972487371981054e-7,"reason":"found"},{"size":128,"iter":4,"optimal":5,"algo":"bfs","found":true,"pathLength":5,"optimality":1,"visited":89,"jevCalls":0,"inputTokens":0,"elapsedMs":0.0440599999999904,"costUsd":0,"probability":null,"reason":"found"},{"size":128,"iter":4,"optimal":5,"algo":"dfs","found":true,"pathLength":10,"optimality":0.5,"visited":110,"jevCalls":0,"inputTokens":0,"elapsedMs":0.05919750000000931,"costUsd":0,"probability":null,"reason":"found"},{"size":128,"iter":4,"optimal":5,"algo":"jfs","found":false,"pathLength":null,"optimality":0,"visited":1,"jevCalls":3,"inputTokens":4719,"elapsedMs":623.4876669999994,"costUsd":0.00019819800000000002,"probability":0,"reason":"jev gave up"},{"size":128,"iter":4,"optimal":5,"algo":"star","found":true,"pathLength":5,"optimality":1,"visited":9,"jevCalls":21,"inputTokens":80762,"elapsedMs":4133.754666999999,"costUsd":0.0033920040000000005,"probability":0.000012960842622487304,"reason":"found"}],"summary":[{"size":8,"algo":"bfs","runs":5,"successRate":1,"optimality":1,"visited":7.4,"jevCalls":0,"elapsedMs":0.001196840000000023,"costUsd":0,"probability":0},{"size":8,"algo":"dfs","runs":5,"successRate":1,"optimality":0.95,"visited":4,"jevCalls":0,"elapsedMs":0.0009758279999999928,"costUsd":0,"probability":0},{"size":8,"algo":"jfs","runs":5,"successRate":1,"optimality":0.95,"visited":3.2,"jevCalls":4.2,"elapsedMs":934.2707667999999,"costUsd":0.00008162280000000001,"probability":0.49213578902399996},{"size":8,"algo":"star","runs":5,"successRate":1,"optimality":1,"visited":3.4,"jevCalls":7.4,"elapsedMs":1303.9098416,"costUsd":0.0001588356,"probability":0.36021766189224813},{"size":16,"algo":"bfs","runs":5,"successRate":1,"optimality":1,"visited":13.8,"jevCalls":0,"elapsedMs":0.004314664000000022,"costUsd":0,"probability":0},{"size":16,"algo":"dfs","runs":5,"successRate":1,"optimality":0.75,"visited":12.4,"jevCalls":0,"elapsedMs":0.0054033359999995974,"costUsd":0,"probability":0},{"size":16,"algo":"jfs","runs":5,"successRate":0.8,"optimality":0.9375,"visited":3.8,"jevCalls":5,"elapsedMs":881.1019332,"costUsd":0.00012358920000000003,"probability":0.21754329869199995},{"size":16,"algo":"star","runs":5,"successRate":1,"optimality":1,"visited":4.6,"jevCalls":11.6,"elapsedMs":1967.4620997999998,"costUsd":0.0003556308000000001,"probability":0.050842502911577894},{"size":32,"algo":"bfs","runs":5,"successRate":1,"optimality":1,"visited":24.4,"jevCalls":0,"elapsedMs":0.017422331999998274,"costUsd":0,"probability":0},{"size":32,"algo":"dfs","runs":5,"successRate":1,"optimality":0.6057142857142856,"visited":18,"jevCalls":0,"elapsedMs":0.011736667999994097,"costUsd":0,"probability":0},{"size":32,"algo":"jfs","runs":5,"successRate":0.8,"optimality":1,"visited":4.2,"jevCalls":5.4,"elapsedMs":915.8202832000001,"costUsd":0.0001622544,"probability":0.282829172175},{"size":32,"algo":"star","runs":5,"successRate":1,"optimality":1,"visited":4.8,"jevCalls":13.6,"elapsedMs":2787.4883502000002,"costUsd":0.0006544692000000001,"probability":0.01245522271935222},{"size":64,"algo":"bfs","runs":5,"successRate":1,"optimality":1,"visited":40.4,"jevCalls":0,"elapsedMs":0.019621664000005694,"costUsd":0,"probability":0},{"size":64,"algo":"dfs","runs":5,"successRate":1,"optimality":0.6888311688311688,"visited":43.2,"jevCalls":0,"elapsedMs":0.02000500400000601,"costUsd":0,"probability":0},{"size":64,"algo":"jfs","runs":5,"successRate":0.6,"optimality":1,"visited":4.8,"jevCalls":6.2,"elapsedMs":1362.4472917999997,"costUsd":0.000263886,"probability":0.31267411559999997},{"size":64,"algo":"star","runs":5,"successRate":1,"optimality":1,"visited":5.2,"jevCalls":21.2,"elapsedMs":3956.5737166,"costUsd":0.0017771964000000001,"probability":0.00022043680375662643},{"size":128,"algo":"bfs","runs":5,"successRate":1,"optimality":1,"visited":102.4,"jevCalls":0,"elapsedMs":0.04341216799999529,"costUsd":0,"probability":0},{"size":128,"algo":"dfs","runs":5,"successRate":1,"optimality":0.5242424242424242,"visited":91.4,"jevCalls":0,"elapsedMs":0.04725933599999553,"costUsd":0,"probability":0},{"size":128,"algo":"jfs","runs":5,"successRate":0,"optimality":0,"visited":3.2,"jevCalls":5.2,"elapsedMs":927.7778999999998,"costUsd":0.000317352,"probability":0},{"size":128,"algo":"star","runs":5,"successRate":1,"optimality":1,"visited":11.6,"jevCalls":36.4,"elapsedMs":6651.2084002,"costUsd":0.005887308000000002,"probability":0.0000026141401571294283}]}
+</script>
+
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  if (params.has('frame')) document.body.classList.add('frame');
+  const BENCH = JSON.parse(document.getElementById('bench').textContent || '{}');
+  const figs = document.getElementById('figs');
+  if (!BENCH.summary) {
+    figs.innerHTML = '<p class="intro">No benchmark recorded yet. Run <code>npm run media:bench</code> (or <code>media:bench:mock</code>).</p>';
+    return;
+  }
+
+  const ALGOS = [
+    { key:'bfs', name:'Breadth-first', short:'BFS', color:'var(--s-bfs)' },
+    { key:'dfs', name:'Depth-first', short:'DFS', color:'var(--s-dfs)' },
+    { key:'jfs', name:'Jev-first', short:'Jev-first', color:'var(--s-jfs)' },
+    { key:'star', name:'Jev*', short:'Jev*', color:'var(--s-star)' },
+  ];
+  const SIZES = BENCH.sizes;
+  const S = (algo, size) => BENCH.summary.find(s => s.algo === algo && s.size === size);
+  const Q = (algo, size) => mean(BENCH.runs.filter(r => r.algo === algo && r.size === size).map(r => r.found ? r.optimality : 0));
+  const runsOf = (algo) => BENCH.runs.filter(r => r.algo === algo);
+  const mean = (xs) => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0;
+  const overall = Object.fromEntries(ALGOS.map(a => {
+    const rs = runsOf(a.key);
+    const found = rs.filter(r => r.found);
+    return [a.key, {
+      costUsd: mean(rs.map(r => r.costUsd)),
+      elapsedMs: mean(rs.map(r => r.elapsedMs)),
+      optimality: mean(rs.map(r => r.found ? r.optimality : 0)),
+      successRate: mean(rs.map(r => r.found ? 1 : 0)),
+      jevCalls: mean(rs.map(r => r.jevCalls)),
+    }];
+  }));
+  const usd = (v, d = 7) => v === 0 ? '$0' : `$${v.toFixed(d)}`;
+  const usdM = (v) => v === 0 ? '$0' : v >= 100 ? `$${Math.round(v).toLocaleString()}` : `$${v.toFixed(2)}`;
+  const pct = (v) => `${Math.round(v * 100)}%`;
+  const fmtMs = (ms) => ms < 0.001 ? `${(ms * 1e6).toFixed(0)} ns` : ms < 1 ? `${(ms * 1000).toFixed(0)} µs` : ms < 1000 ? `${ms.toFixed(0)} ms` : `${(ms / 1000).toFixed(1)} s`;
+  const when = new Date(BENCH.recordedAt).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+  const source = `${BENCH.iters} random graphs per size · ${BENCH.mock ? 'mock client' : BENCH.model} · ${when}`;
+
+  document.getElementById('intro').innerHTML =
+    `Each of the four searches ran on the same random connected graphs: ${SIZES.join(', ')} nodes, ${BENCH.iters} graphs each, start at <code>n0</code>, goal at least three edges away. ` +
+    (BENCH.mock ? 'These numbers come from the mock client, not from Jev.' : `Jev-first and Jev* made real requests to <code>${BENCH.model}</code>. Cost is input tokens at $0.042 per million; output is free.`);
+
+  // ---- helpers ----
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs = {}, text) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; return e; };
+  const tip = document.getElementById('tip');
+  function hover(target, text) {
+    target.addEventListener('mousemove', (e) => { tip.textContent = text; tip.classList.add('on'); tip.style.left = `${e.clientX + 14}px`; tip.style.top = `${e.clientY + 14}px`; });
+    target.addEventListener('mouseleave', () => tip.classList.remove('on'));
+  }
+  const logScale = (lo, hi, a, b) => (v) => a + (Math.log10(v) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo)) * (b - a);
+  const linScale = (lo, hi, a, b) => (v) => a + (v - lo) / (hi - lo) * (b - a);
+  const pow10 = (e) => e < 0 ? `10⁻${String(-e).replace(/\d/g, d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d])}` : e === 0 ? '1' : `10${String(e).replace(/\d/g, d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d])}`;
+
+  function stage(id, title, sub, legendAlgos, note) {
+    const wrap = document.createElement('section');
+    wrap.className = 'fig-wrap';
+    wrap.dataset.fig = id;
+    wrap.innerHTML = `
+      <div class="stage">
+        <div class="fig-head"><div><h3 class="fig-title">${title}</h3><p class="fig-sub">${sub}</p></div><div class="fig-repo">github.com/fcjr/jev-first-search</div></div>
+        <div class="fig-body"></div>
+        <div class="fig-foot"><div class="legend">${legendAlgos.map(a => `<span><i style="background:${a.color}"></i>${a.name}</span>`).join('')}</div><div class="note">${note ?? source}</div></div>
+      </div>`;
+    figs.appendChild(wrap);
+    const svg = el('svg', { viewBox: '0 0 1144 470', preserveAspectRatio: 'xMidYMid meet' });
+    wrap.querySelector('.fig-body').appendChild(svg);
+    return svg;
+  }
+  function yAxis(svg, x0, x1, ticks, y, fmt, title) {
+    const g = el('g', { class: 'axis' });
+    for (const t of ticks) {
+      g.appendChild(el('line', { class: 'gridline', x1: x0, x2: x1, y1: y(t), y2: y(t) }));
+      g.appendChild(el('text', { x: x0 - 10, y: y(t) + 4, 'text-anchor': 'end' }, fmt(t)));
+    }
+    if (title) g.appendChild(el('text', { class: 'axis-title', x: 0, y: 12 }, title));
+    svg.appendChild(g);
+  }
+  function xAxisSizes(svg, x, y0, x0, x1) {
+    const g = el('g', { class: 'axis base' });
+    g.appendChild(el('path', { d: `M${x0},${y0}H${x1}` }));
+    for (const s of SIZES) g.appendChild(el('text', { x: x(s), y: y0 + 22, 'text-anchor': 'middle' }, `${s}`));
+    g.appendChild(el('text', { class: 'axis-title', x: x1, y: y0 + 42, 'text-anchor': 'end' }, 'nodes in graph'));
+    svg.appendChild(g);
+  }
+  function line(svg, pts, color, label, tipFn) {
+    const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y}`).join('');
+    svg.appendChild(el('path', { class: 'series', d, stroke: color }));
+    for (const p of pts) {
+      const c = el('circle', { class: 'dot', cx: p.x, cy: p.y, r: 5, fill: color });
+      svg.appendChild(c);
+      const hit = el('circle', { class: 'hit', cx: p.x, cy: p.y, r: 14 });
+      hover(hit, tipFn(p));
+      svg.appendChild(hit);
+    }
+    const last = pts[pts.length - 1];
+    svg.appendChild(el('text', { class: 'dlabel', x: last.x + 12, y: last.y + 4 }, label));
+  }
+
+  // ---- fig 1: time ----
+  {
+    const svg = stage('time', 'Time to find a path', 'Mean wall-clock time per search. BFS and DFS are measured in this benchmark run. Jev-first and Jev* include the round trips to Jev.', ALGOS);
+    const L = 84, R = 990, T = 24, B = 410;
+    const allMs = BENCH.summary.map(s => s.elapsedMs).filter(v => v > 0);
+    const lo = Math.pow(10, Math.floor(Math.log10(Math.min(...allMs)))), hi = Math.pow(10, Math.ceil(Math.log10(Math.max(...allMs))));
+    const y = logScale(lo, hi, B, T);
+    const x = logScale(SIZES[0], SIZES[SIZES.length - 1], L, R);
+    const ticks = []; for (let e = Math.log10(lo); e <= Math.log10(hi); e++) ticks.push(Math.pow(10, e));
+    yAxis(svg, L, R, ticks, y, fmtMs, 'time per search');
+    xAxisSizes(svg, x, B, L, R);
+    // labels collide at the right edge when two series are close; nudge them apart
+    const ends = ALGOS.map(a => ({ a, yv: y(S(a.key, SIZES[SIZES.length - 1]).elapsedMs) })).sort((p, q) => p.yv - q.yv);
+    for (let i = 1; i < ends.length; i++) if (ends[i].yv - ends[i-1].yv < 16) ends[i].yv = ends[i-1].yv + 16;
+    for (const a of ALGOS) {
+      const pts = SIZES.map(s => ({ x: x(s), y: y(S(a.key, s).elapsedMs), size: s, ms: S(a.key, s).elapsedMs }));
+      const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y}`).join('');
+      svg.appendChild(el('path', { class: 'series', d, stroke: a.color }));
+      for (const p of pts) {
+        svg.appendChild(el('circle', { class: 'dot', cx: p.x, cy: p.y, r: 5, fill: a.color }));
+        const hit = el('circle', { class: 'hit', cx: p.x, cy: p.y, r: 14 });
+        hover(hit, `${a.name} · ${p.size} nodes\n${fmtMs(p.ms)} per search`);
+        svg.appendChild(hit);
+      }
+      const e = ends.find(q => q.a === a);
+      svg.appendChild(el('text', { class: 'dlabel', x: R + 12, y: e.yv + 4 }, `${a.short} · ${fmtMs(pts[pts.length - 1].ms)}`));
+    }
+    const big = SIZES[SIZES.length - 1];
+    const ratio = S('jfs', big).elapsedMs / S('bfs', big).elapsedMs;
+    const rtxt = ratio >= 1e6 ? `${(ratio / 1e6).toFixed(1)} million×` : `${Math.round(ratio).toLocaleString()}×`;
+    svg.appendChild(el('text', { class: 'annot big', x: L + 16, y: (T + B) / 2 - 6 }, `${rtxt} slower.`));
+    svg.appendChild(el('text', { class: 'annot', x: L + 16, y: (T + B) / 2 + 18 }, `Jev-first vs. breadth-first on ${big} nodes. Linear in the number of nodes. So is the invoice.`));
+  }
+
+  // ---- fig 2: the frontier ----
+  {
+    const svg = stage('frontier', 'Cost vs. quality. <em>The frontier.</em>', 'Mean cost per search against path quality: optimal length ÷ found length, and 0 when the search gave up. Every model on this chart is on the Pareto frontier if you squint.', ALGOS, `${source} · cost = input tokens × $0.042/M`);
+    const L = 84, R = 1000, T = 24, B = 410;
+    const ZERO_X = L + 60, LOG_X0 = L + 150;
+    const costs = ALGOS.map(a => overall[a.key].costUsd).filter(c => c > 0);
+    const lo = Math.pow(10, Math.floor(Math.log10(Math.min(...costs)))), hi = Math.pow(10, Math.ceil(Math.log10(Math.max(...costs))));
+    const xlog = logScale(lo, hi, LOG_X0, R);
+    const x = (c) => c === 0 ? ZERO_X : xlog(c);
+    const y = linScale(0, 1, B, T);
+    yAxis(svg, L, R, [0, 0.25, 0.5, 0.75, 1], y, pct, 'path quality');
+    const ax = el('g', { class: 'axis base' });
+    ax.appendChild(el('path', { d: `M${L},${B}H${R}` }));
+    ax.appendChild(el('text', { x: ZERO_X, y: B + 22, 'text-anchor': 'middle' }, '$0'));
+    // axis break
+    ax.appendChild(el('path', { class: 'frontier', d: `M${LOG_X0 - 30},${B - 6}l6,12` , 'stroke-dasharray': 'none' }));
+    ax.appendChild(el('path', { class: 'frontier', d: `M${LOG_X0 - 22},${B - 6}l6,12`, 'stroke-dasharray': 'none' }));
+    for (let e = Math.log10(lo); e <= Math.log10(hi); e++) { const v = Math.pow(10, e); ax.appendChild(el('text', { x: xlog(v), y: B + 22, 'text-anchor': 'middle' }, `$${v.toFixed(Math.max(0, -e))}`)); }
+    ax.appendChild(el('text', { class: 'axis-title', x: R, y: B + 42, 'text-anchor': 'end' }, 'cost per search (log)'));
+    svg.appendChild(ax);
+    // frontier: cheapest for each quality level, i.e. the $0 column
+    const best = ALGOS.map(a => overall[a.key]).filter(o => o.costUsd === 0).sort((p, q) => q.optimality - p.optimality)[0];
+    svg.appendChild(el('path', { class: 'frontier', d: `M${ZERO_X},${T}V${y(best.optimality)}H${R}` }));
+    svg.appendChild(el('text', { class: 'annot', x: R - 4, y: y(best.optimality) - 8, 'text-anchor': 'end' }, 'the frontier'));
+    // per-size faint points, then the mean
+    for (const a of ALGOS) {
+      for (const s of SIZES) {
+        const st = S(a.key, s);
+        svg.appendChild(el('circle', { cx: x(st.costUsd) + (st.costUsd === 0 ? (a.key === 'dfs' ? 10 : -10) : 0), cy: y(st.optimality), r: 4, fill: a.color, opacity: 0.35 }));
+      }
+    }
+    const placed = [];
+    for (const a of ALGOS) {
+      const o = overall[a.key];
+      const cx = x(o.costUsd) + (o.costUsd === 0 ? (a.key === 'dfs' ? 10 : -10) : 0), cy = y(o.optimality);
+      const c = el('circle', { class: 'dot', cx, cy, r: 9, fill: a.color });
+      svg.appendChild(c);
+      const hit = el('circle', { class: 'hit', cx, cy, r: 18 });
+      hover(hit, `${a.name}\n${usd(o.costUsd)} per search · ${pct(o.optimality)} of optimal\n${pct(o.successRate)} found · ${o.jevCalls.toFixed(1)} requests`);
+      svg.appendChild(hit);
+      let ly = cy < T + 40 ? cy + 30 : cy - 16;
+      while (placed.some(p => Math.abs(p.x - cx) < 160 && Math.abs(p.y - ly) < 18)) ly += cy < T + 40 ? 18 : -18;
+      placed.push({ x: cx, y: ly });
+      svg.appendChild(el('text', { class: 'dlabel', x: cx, y: ly, 'text-anchor': 'middle' }, `${a.short} · ${usd(o.costUsd, 6)} · ${pct(o.optimality)}`));
+    }
+  }
+
+  // ---- fig 3: pricing ----
+  {
+    const svg = stage('pricing', 'Pricing', 'Cost per one million searches, mean over all graph sizes. Input tokens at $0.042 per million. Output tokens are free, which helps.', ALGOS, `${source} · per 1M searches`);
+    const L = 180, R = 1000, T = 40, B = 400;
+    const rows = ALGOS.map(a => ({ a, v: overall[a.key].costUsd * 1e6 }));
+    const max = Math.max(...rows.map(r => r.v));
+    const x = linScale(0, max * 1.15, L, R);
+    const rowH = (B - T) / rows.length;
+    svg.appendChild(el('path', { class: 'frontier', d: `M${L},${T - 10}V${B + 10}`, 'stroke-dasharray': 'none', stroke: 'var(--ink)' }));
+    rows.forEach((r, i) => {
+      const yc = T + rowH * i + rowH / 2, h = 34;
+      svg.appendChild(el('text', { class: 'dlabel', x: L - 14, y: yc + 5, 'text-anchor': 'end' }, r.a.name));
+      if (r.v === 0) {
+        svg.appendChild(el('text', { class: 'annot', x: L + 12, y: yc + 5 }, 'free · no API key · no probabilities'));
+      } else {
+        const w = Math.max(6, x(r.v) - L);
+        const bar = el('rect', { x: L, y: yc - h / 2, width: w, height: h, fill: r.a.color, rx: 4 });
+        svg.appendChild(el('rect', { x: L, y: yc - h / 2, width: 4, height: h, fill: r.a.color }));
+        svg.appendChild(bar);
+        hover(bar, `${r.a.name}\n${usdM(r.v)} per million searches\n${overall[r.a.key].jevCalls.toFixed(1)} requests per search`);
+        svg.appendChild(el('text', { class: 'dlabel', x: L + w + 12, y: yc + 5 }, `${usdM(r.v)} / 1M searches`));
+      }
+    });
+    const jfs = rows.find(r => r.a.key === 'jfs').v;
+    svg.appendChild(el('text', { class: 'annot big', x: L, y: B + 52 }, `${usdM(jfs)} to search a million graphs.`));
+    svg.appendChild(el('text', { class: 'annot', x: L, y: B + 76 }, `That is ${usdM(jfs)} more than the alternative, and the alternative was already installed.`));
+  }
+
+  // ---- fig 4: probably ----
+  {
+    const jevAlgos = ALGOS.filter(a => a.key === 'jfs' || a.key === 'star');
+    const svg = stage('probably', 'Every path was found. <em>Probably.</em>', 'Probability of each result: the product of Jev\'s confidence at every step. One dot per graph. It goes to zero as the graph grows. The paths are still there.', jevAlgos);
+    const L = 84, R = 990, T = 24, B = 410;
+    const x = logScale(SIZES[0], SIZES[SIZES.length - 1], L, R);
+    const probs = BENCH.runs.filter(r => (r.algo === 'jfs' || r.algo === 'star') && r.found && r.probability > 0).map(r => r.probability);
+    const lo = Math.pow(10, Math.floor(Math.log10(Math.min(...probs, 0.1))));
+    const y = logScale(lo, 1, B, T);
+    const ticks = []; for (let e = Math.log10(lo); e <= 0; e++) ticks.push(Math.pow(10, e));
+    yAxis(svg, L, R, ticks, y, (v) => pow10(Math.round(Math.log10(v))), 'probability (log)');
+    xAxisSizes(svg, x, B, L, R);
+    const ends = [];
+    for (const a of jevAlgos) {
+      const off = a.key === 'jfs' ? -7 : 7;
+      for (const r of runsOf(a.key)) if (r.found && r.probability > 0) {
+        const c = el('circle', { class: 'dot', cx: x(r.size) + off, cy: y(Math.max(r.probability, lo)), r: 6, fill: a.color, opacity: 0.85 });
+        hover(c, `${a.name} · ${r.size} nodes · graph #${r.iter + 1}\nprobability ${r.probability.toExponential(2)}\npath ${r.pathLength} edges (optimal ${r.optimal})`);
+        svg.appendChild(c);
+      }
+      const pts = SIZES.map(s => { const rs = runsOf(a.key).filter(r => r.size === s && r.found && r.probability > 0); const gm = rs.length ? Math.exp(mean(rs.map(r => Math.log(r.probability)))) : null; return gm ? { x: x(s) + off, y: y(Math.max(gm, lo)), gm } : null; }).filter(Boolean);
+      svg.appendChild(el('path', { class: 'series', d: pts.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y}`).join(''), stroke: a.color, opacity: 0.6 }));
+      ends.push({ a, y: pts[pts.length - 1].y, gm: pts[pts.length - 1].gm });
+    }
+    ends.sort((p, q) => p.y - q.y);
+    for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i-1].y < 16) ends[i].y = ends[i-1].y + 16;
+    for (const e of ends) svg.appendChild(el('text', { class: 'dlabel', x: R + 12, y: e.y + 4 }, `${e.a.short} · ${e.gm.toExponential(1)}`));
+    const found = BENCH.runs.filter(r => r.algo === 'jfs');
+    svg.appendChild(el('text', { class: 'annot big', x: L + 16, y: B - 78 }, `Jev-first found ${found.filter(r => r.found).length} of ${found.length} paths. Jev* found all ${found.length}.`));
+    svg.appendChild(el('text', { class: 'annot', x: L + 16, y: B - 54 }, `Mean stated probability that a Jev-first path is right: ${mean(found.map(r => r.probability ?? 0)).toExponential(1)}. Lines show the geometric mean.`));
+  }
+
+  // ---- fig 5: quality by size ----
+  {
+    const svg = stage('quality', 'Path quality by graph size', 'Optimal length ÷ found length, and 0 when the search gave up. Breadth-first is 100% by definition. Jev* is dashed because it sits exactly on top of it.', ALGOS);
+    const L = 84, R = 990, T = 24, B = 410;
+    const x = logScale(SIZES[0], SIZES[SIZES.length - 1], L, R);
+    const y = linScale(0, 1, B, T);
+    yAxis(svg, L, R, [0, 0.25, 0.5, 0.75, 1], y, pct, 'path quality');
+    xAxisSizes(svg, x, B, L, R);
+    const ends = ALGOS.map(a => ({ a, yv: y(Q(a.key, SIZES[SIZES.length - 1])) })).sort((p, q) => p.yv - q.yv);
+    for (let i = 1; i < ends.length; i++) if (ends[i].yv - ends[i-1].yv < 16) ends[i].yv = ends[i-1].yv + 16;
+    for (const a of ALGOS) {
+      const pts = SIZES.map(s => ({ x: x(s), y: y(Q(a.key, s)), size: s, st: S(a.key, s), q: Q(a.key, s) }));
+      svg.appendChild(el('path', { class: 'series', d: pts.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y}`).join(''), stroke: a.color, ...(a.key === 'star' ? { 'stroke-dasharray': '10 8' } : {}) }));
+      for (const p of pts) {
+        svg.appendChild(el('circle', { class: 'dot', cx: p.x, cy: p.y, r: 5, fill: a.color }));
+        const hit = el('circle', { class: 'hit', cx: p.x, cy: p.y, r: 14 });
+        hover(hit, `${a.name} · ${p.size} nodes\n${pct(p.q)} quality · ${pct(p.st.successRate)} found\n${p.st.visited.toFixed(1)} nodes visited`);
+        svg.appendChild(hit);
+      }
+      const e = ends.find(q => q.a === a);
+      svg.appendChild(el('text', { class: 'dlabel', x: R + 12, y: e.yv + 4 }, `${a.short} · ${pct(pts[pts.length - 1].q)}`));
+    }
+  }
+
+  // ---- table ----
+  {
+    const t = document.getElementById('table');
+    t.innerHTML = `<thead><tr><th>nodes</th><th>search</th><th>found</th><th>quality</th><th>visited</th><th>requests</th><th>time</th><th>cost / search</th><th>probability</th></tr></thead><tbody>` +
+      BENCH.summary.map(s => { const a = ALGOS.find(a => a.key === s.algo); return `<tr><td>${s.size}</td><td>${a.name}</td><td>${pct(s.successRate)}</td><td>${pct(Q(s.algo, s.size))}</td><td>${s.visited.toFixed(1)}</td><td>${s.jevCalls.toFixed(1)}</td><td>${fmtMs(s.elapsedMs)}</td><td>${usd(s.costUsd)}</td><td>${s.jevCalls ? s.probability.toExponential(1) : '—'}</td></tr>`; }).join('') + '</tbody>';
+  }
+
+  // ---- fit stages to the page width; frame mode shows one figure ----
+  window.__FIGS__ = [...figs.querySelectorAll('.fig-wrap')].map(w => w.dataset.fig);
+  window.__showFig = (id) => { for (const w of figs.querySelectorAll('.fig-wrap')) w.classList.toggle('only', w.dataset.fig === id); };
+  if (params.has('fig')) window.__showFig(params.get('fig'));
+  function fit() {
+    for (const w of figs.querySelectorAll('.fig-wrap')) {
+      const st = w.querySelector('.stage');
+      if (document.body.classList.contains('frame')) { st.style.transform = ''; w.style.height = '676px'; continue; }
+      if (!w.clientWidth) continue;
+      const s = Math.min(1, w.clientWidth / 1200);
+      st.style.transform = `scale(${s})`;
+      w.style.height = `${676 * s}px`;
+    }
+  }
+  window.addEventListener('resize', fit);
+  fit();
+  document.fonts?.ready.then(fit);
+})();
+</script>

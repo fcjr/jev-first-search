@@ -45,19 +45,21 @@ export async function jevFirstSearch(graph, start, goal, options = {}) {
     return { answers: result.answers, ms: performance.now() - t };
   };
 
-  const finish = (path, reason) => {
-    const result = {
-      path,
-      reason,
-      visited,
-      steps,
-      jevCalls,
-      inputTokens,
-      elapsedMs: performance.now() - t0,
-      estimatedCostUsd: inputTokens * USD_PER_INPUT_TOKEN,
-    };
-    return result;
-  };
+  // The product of Jev's confidence at every step. "Probably" has a number now.
+  const probability = () =>
+    steps.reduce((p, s) => p * (s.type === 'jev-first' ? s.noul : s.confidence), 1);
+
+  const finish = (path, reason) => ({
+    path,
+    reason,
+    probability: path ? probability() : 0,
+    visited,
+    steps,
+    jevCalls,
+    inputTokens,
+    elapsedMs: performance.now() - t0,
+    estimatedCostUsd: inputTokens * USD_PER_INPUT_TOKEN,
+  });
 
   // Jev first. Then search.
   if (jevFirst) {

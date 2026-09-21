@@ -28,7 +28,10 @@
     "prepublishOnly": "npm test",
     "media:record": "node scripts/record.js",
     "media:record:mock": "node scripts/record.js --mock",
-    "media:render": "node scripts/render.mjs media/race.html media/race.mp4 && node scripts/render.mjs media/terminal.html media/terminal.mp4"
+    "media:render": "node scripts/render.mjs media/race.html media/race.mp4 && node scripts/render.mjs media/terminal.html media/terminal.mp4",
+    "media:bench": "node scripts/bench.js",
+    "media:bench:mock": "node scripts/bench.js --mock",
+    "media:snap": "node scripts/snap.mjs"
   },
   "keywords": [
     "graph",
